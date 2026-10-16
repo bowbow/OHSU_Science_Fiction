@@ -1,0 +1,12 @@
+{
+  "name": "@bookclub/core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "node --experimental-strip-types --test test/register-password.test.ts test/sign-in-password.test.ts test/admins.test.ts test/book-club.test.ts test/boundary.test.ts"
+  }
+}

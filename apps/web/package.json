@@ -1,0 +1,13 @@
+{
+  "name": "@bookclub/web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@bookclub/core": "0.0.0"
+  },
+  "scripts": {
+    "test": "node --experimental-strip-types --test test/register-page.test.ts test/session-cookie.test.ts test/admin-role.test.ts test/book-club-page.test.ts",
+    "start": "node --experimental-strip-types src/server.ts"
+  }
+}

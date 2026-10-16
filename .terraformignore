@@ -1,0 +1,15 @@
+.git/
+.terraform/
+node_modules/
+data/
+coverage/
+*.sqlite
+*.sqlite3
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfvars
+.env
+.env.*
+*.tar.gz
+*.tgz
