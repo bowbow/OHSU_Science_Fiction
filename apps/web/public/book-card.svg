@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="500" viewBox="0 0 320 500" fill="none">
+  <defs>
+    <linearGradient id="shell" x1="22" y1="14" x2="298" y2="486" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#12394A"/>
+      <stop offset="0.45" stop-color="#071C29"/>
+      <stop offset="1" stop-color="#020B13"/>
+    </linearGradient>
+    <linearGradient id="screen" x1="44" y1="78" x2="277" y2="426" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0D3152" stop-opacity="0.92"/>
+      <stop offset="0.48" stop-color="#082139" stop-opacity="0.94"/>
+      <stop offset="1" stop-color="#04131F" stop-opacity="0.98"/>
+    </linearGradient>
+    <linearGradient id="edge" x1="10" y1="12" x2="310" y2="488" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#74F8EE"/>
+      <stop offset="0.48" stop-color="#267FAD"/>
+      <stop offset="1" stop-color="#527CFF"/>
+    </linearGradient>
+    <linearGradient id="status" x1="31" y1="22" x2="177" y2="69" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7DFFF3"/>
+      <stop offset="0.55" stop-color="#2B91B6"/>
+      <stop offset="1" stop-color="#10345B"/>
+    </linearGradient>
+    <pattern id="grid" width="16" height="16" patternUnits="userSpaceOnUse">
+      <path d="M16 0H0V16" stroke="#58A9DD" stroke-width="0.6" opacity="0.18"/>
+    </pattern>
+    <filter id="glow" x="-20%" y="-15%" width="140%" height="130%">
+      <feGaussianBlur stdDeviation="2.2" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- A true playing-card slab: rectangular, with only small clipped corners. -->
+  <path d="M20 7H300L313 20V480L300 493H20L7 480V20L20 7Z"
+        fill="#01070D" stroke="#0B2637" stroke-width="6" opacity="0.9"/>
+  <path d="M22 13H298L307 22V478L298 487H22L13 478V22L22 13Z"
+        fill="url(#shell)" stroke="url(#edge)" stroke-width="2" filter="url(#glow)"/>
+  <path d="M31 24H289L296 31V469L289 476H31L24 469V31L31 24Z"
+        stroke="#397795" stroke-width="1" opacity="0.72"/>
+
+  <!-- Inset display panel gives the card an electronic-token surface. -->
+  <path d="M39 78H281L292 89V410L276 426H44L28 410V89L39 78Z"
+        fill="url(#screen)" stroke="#2F7CAB" stroke-width="1.4"/>
+  <path d="M39 78H281L292 89V410L276 426H44L28 410V89L39 78Z"
+        fill="url(#grid)" opacity="0.75"/>
+  <path d="M45 87H274L283 96V399L267 415H53L37 399V96L45 87Z"
+        stroke="#5ADFD8" stroke-width="0.8" opacity="0.28"/>
+
+  <!-- Compact status plate under the vote count. -->
+  <path d="M32 20H171L185 34L171 63H39L25 49L32 20Z"
+        fill="url(#status)" stroke="#A7FFF8" stroke-width="1.1"/>
+  <path d="M197 28H274L287 41M207 36H269L282 49M218 44H264L277 57"
+        stroke="#61EDE2" stroke-width="2" opacity="0.7"/>
+
+  <!-- Circuit traces enter the card from both ends without changing its silhouette. -->
+  <path d="M55 13V31L67 43V67M80 13V29L91 40V67M241 13V30L231 40V68M266 13V32L254 44V68"
+        stroke="#54AFFF" stroke-width="1.4" opacity="0.66"/>
+  <path d="M13 124H24L35 135M13 157H24L35 146M307 127H296L285 138M307 160H296L285 149"
+        stroke="#59E8DE" stroke-width="1.4" opacity="0.62"/>
+  <path d="M60 487V468L72 456V438M88 487V470L100 458V438M232 487V468L244 456V438M260 487V470L272 458V438"
+        stroke="#59E8DE" stroke-width="1.5" opacity="0.72"/>
+
+  <!-- Tiny status marks keep the references' control-panel feel. -->
+  <path d="M25 72L36 77L25 82Z" fill="#FF557D" opacity="0.9"/>
+  <path d="M295 72L284 77L295 82Z" fill="#79E66A" opacity="0.9"/>
+  <path d="M38 447H57M63 447H74M246 447H257M263 447H282" stroke="#58B6FF" stroke-width="2"/>
+  <circle cx="45" cy="466" r="3" fill="#79E66A"/>
+  <circle cx="55" cy="466" r="3" fill="#4CC7FF"/>
+  <circle cx="65" cy="466" r="3" fill="#FF557D"/>
+  <circle cx="287" cy="467" r="3.5" fill="#031019" stroke="#61EDE2" stroke-width="1.2"/>
+</svg>

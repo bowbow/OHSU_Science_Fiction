@@ -18,6 +18,7 @@ Assert-Contains $deploy "AWS-RunShellScript" "Deployment must use Systems Manage
 Assert-Contains $deploy "get-caller-identity" "Deployment must verify the selected AWS profile."
 Assert-Contains $deploy 'Terraform-Output "backup_bucket"' "Deployment must read the backup bucket output."
 Assert-Contains $remote "/var/lib/bookclub/bookclub\.sqlite" "Remote deployment must not relocate the persistent database."
+Assert-Contains $remote "BOOKCLUB_INITIALIZE_DATABASE=false" "Production startup must not initialize or migrate the database."
 Assert-Contains $remote "Release archive contains a forbidden" "Remote deployment must reject unsafe archives."
 Assert-Contains $remote "current\.rollback" "Remote deployment must retain rollback behavior."
 Assert-Contains $remote "backup-database\.sh.+pre-deploy" "Remote deployment must back up the database before activation."

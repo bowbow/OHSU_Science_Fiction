@@ -1,65 +1,90 @@
 import assert from "node:assert/strict";
-import { mkdtempSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { test } from "node:test";
 import { openCore } from "../src/index.ts";
+import { addTestAdmin } from "./support.ts";
 
-test("bow starts as an admin and registration stays regular", () => {
+test("startup does not create an administrator", () => {
   const core = openCore(":memory:");
-  const bow = core.signInWithPassword({ username: "Bow", password: "admin" });
-  assert.equal(bow.ok, true);
-  if (!bow.ok) {
-    return;
-  }
-  assert.equal(bow.member.username, "bow");
-  assert.equal(bow.member.role, "admin");
-  assert.equal(JSON.stringify(bow).includes("password_hash"), false);
-  assert.equal(core.currentMember(bow.sessionId)?.role, "admin");
-
-  assert.deepEqual(core.registerWithPassword({ username: "bow", password: "other" }), {
+  assert.equal(core.db.prepare("SELECT COUNT(*) AS count FROM members").get()?.count, 0);
+  assert.deepEqual(core.signInWithPassword({ username: "bow", password: "admin" }), {
     ok: false,
-    failure: { code: "username_taken" },
+    failure: { code: "invalid_credentials" },
   });
 
   const registered = core.registerWithPassword({ username: "Ada", password: "admin" });
   assert.equal(registered.ok, true);
-  if (!registered.ok) {
-    return;
+  if (registered.ok) {
+    assert.equal(registered.member.role, "regular");
   }
-  assert.equal(registered.member.role, "regular");
 });
 
-test("starting again does not duplicate the admin or change its password", () => {
+test("an explicitly assigned administrator keeps that role after restart", () => {
   const dir = mkdtempSync(join(tmpdir(), "bookclub-admins-"));
   const path = join(dir, "club.sqlite");
   try {
     const first = openCore(path);
-    const before = first.db.prepare(
-      "SELECT password_hash FROM members WHERE username_normalized = ?",
-    ).get("bow") as { password_hash: string };
+    addTestAdmin(first);
     first.db.close();
 
-    const second = openCore(path);
-    const rows = second.db.prepare(
-      "SELECT username, role, password_hash FROM members WHERE username_normalized = 'bow' ORDER BY username",
-    ).all() as { username: string; role: string; password_hash: string }[];
-    assert.deepEqual(
-      rows.map((row) => ({ username: row.username, role: row.role })),
-      [
-        { username: "bow", role: "admin" },
-      ],
-    );
-    assert.equal(rows[0]?.password_hash, before.password_hash);
-    assert.equal(second.signInWithPassword({ username: "bow", password: "admin" }).ok, true);
+    const second = openCore(path, { initializeDatabase: false });
+    const signedIn = second.signInWithPassword({ username: "bow", password: "admin" });
+    assert.equal(signedIn.ok, true);
+    if (signedIn.ok) {
+      assert.equal(signedIn.member.role, "admin");
+    }
+    assert.equal(second.db.prepare("SELECT COUNT(*) AS count FROM members").get()?.count, 1);
     second.db.close();
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
 });
 
-test("an older member table gains roles and the seeded admins", () => {
+test("database initialization can be disabled", () => {
+  const dir = mkdtempSync(join(tmpdir(), "bookclub-no-init-"));
+  const missingPath = join(dir, "missing.sqlite");
+  const emptyPath = join(dir, "empty.sqlite");
+  try {
+    assert.throws(
+      () => openCore(missingPath, { initializeDatabase: false }),
+      /Database initialization is disabled and the database does not exist/,
+    );
+    assert.equal(existsSync(missingPath), false);
+
+    new DatabaseSync(emptyPath).close();
+    const core = openCore(emptyPath, { initializeDatabase: false });
+    const tables = core.db.prepare(
+      "SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name",
+    ).all();
+    assert.deepEqual(tables, []);
+    core.db.close();
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("disabled initialization leaves an existing database file unchanged", () => {
+  const dir = mkdtempSync(join(tmpdir(), "bookclub-unchanged-"));
+  const path = join(dir, "club.sqlite");
+  try {
+    const initialized = openCore(path);
+    initialized.registerWithPassword({ username: "Ada", password: "secret" });
+    initialized.db.close();
+    const before = readFileSync(path);
+
+    const reopened = openCore(path, { initializeDatabase: false });
+    reopened.db.close();
+
+    assert.deepEqual(readFileSync(path), before);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("an older member table gains roles only when initialization is enabled", () => {
   const dir = mkdtempSync(join(tmpdir(), "bookclub-migrate-"));
   const path = join(dir, "club.sqlite");
   try {
@@ -76,20 +101,16 @@ test("an older member table gains roles and the seeded admins", () => {
     `);
     db.close();
 
-    const core = openCore(path);
-    const ada = core.registerWithPassword({ username: "Ada", password: "secret" });
-    assert.equal(ada.ok, true);
-    if (!ada.ok) {
-      return;
-    }
-    assert.equal(ada.member.role, "regular");
-    const bow = core.signInWithPassword({ username: "bow", password: "admin" });
-    assert.equal(bow.ok, true);
-    if (!bow.ok) {
-      return;
-    }
-    assert.equal(bow.member.role, "admin");
-    core.db.close();
+    const noInitialization = openCore(path, { initializeDatabase: false });
+    const before = noInitialization.db.prepare("PRAGMA table_info(members)").all() as { name: string }[];
+    assert.equal(before.some((column) => column.name === "role"), false);
+    noInitialization.db.close();
+
+    const initialized = openCore(path);
+    const after = initialized.db.prepare("PRAGMA table_info(members)").all() as { name: string }[];
+    assert.equal(after.some((column) => column.name === "role"), true);
+    assert.equal(initialized.db.prepare("SELECT COUNT(*) AS count FROM members").get()?.count, 0);
+    initialized.db.close();
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

@@ -1,10 +1,13 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { openCore } from "@bookclub/core";
+import { addTestAdmin } from "../../../packages/core/test/support.ts";
 import { createApp } from "../src/app.ts";
 
 test("an admin account page names the admin and a registration stays regular", async () => {
-  const app = createApp({ core: openCore(":memory:") });
+  const core = openCore(":memory:");
+  addTestAdmin(core);
+  const app = createApp({ core });
   const signedIn = await app.handle({
     method: "POST",
     path: "/sign-in",

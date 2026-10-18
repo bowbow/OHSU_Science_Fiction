@@ -1,3 +1,4 @@
+import { readFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import { findOpenLibraryBooks, findOpenLibraryCoverId, openCore } from "@bookclub/core";
 import { activityLogPath, createActivityLog } from "./activity-log.ts";
@@ -5,7 +6,7 @@ import { createApp } from "./app.ts";
 import { loadConfig } from "./config.ts";
 
 const config = loadConfig();
-const core = openCore(config.sqlitePath);
+const core = openCore(config.sqlitePath, { initializeDatabase: config.initializeDatabase });
 const app = createApp({
   core,
   secureCookies: config.publicBaseUrl.startsWith("https://"),
@@ -16,11 +17,33 @@ const app = createApp({
 
 const port = Number(process.env.PORT ?? 3000);
 const server = createServer(async (request, response) => {
+  const requestUrl = new URL(request.url ?? "/", config.publicBaseUrl);
+  const staticAsset = requestUrl.pathname === "/assets/starfield.jpg"
+    ? { file: "starfield.jpg", contentType: "image/jpeg" }
+    : requestUrl.pathname === "/assets/target-cursor.svg"
+      ? { file: "target-cursor.svg", contentType: "image/svg+xml; charset=utf-8" }
+      : requestUrl.pathname === "/assets/book-card.svg"
+        ? { file: "book-card.svg", contentType: "image/svg+xml; charset=utf-8" }
+      : null;
+  if (request.method === "GET" && staticAsset) {
+    try {
+      const asset = await readFile(new URL(`../public/${staticAsset.file}`, import.meta.url));
+      response.writeHead(200, {
+        "Content-Type": staticAsset.contentType,
+        "Cache-Control": "public, max-age=3600",
+      });
+      response.end(asset);
+    } catch {
+      response.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
+      response.end("Not found");
+    }
+    return;
+  }
+
   const chunks: Buffer[] = [];
   for await (const chunk of request) {
     chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
   }
-  const requestUrl = new URL(request.url ?? "/", config.publicBaseUrl);
   const result = await app.handle({
     method: request.method ?? "GET",
     path: requestUrl.pathname,

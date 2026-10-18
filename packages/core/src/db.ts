@@ -1,4 +1,4 @@
-import { mkdirSync } from "node:fs";
+import { existsSync, mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
@@ -67,17 +67,27 @@ CREATE TABLE IF NOT EXISTS meeting_votes (
 );
 `;
 
-export function openDatabase(path: string): DatabaseSync {
-  if (path !== ":memory:") {
+export type OpenDatabaseOptions = {
+  initializeDatabase?: boolean;
+};
+
+export function openDatabase(path: string, options: OpenDatabaseOptions = {}): DatabaseSync {
+  const initializeDatabase = options.initializeDatabase ?? true;
+  if (path !== ":memory:" && initializeDatabase) {
     mkdirSync(dirname(path), { recursive: true });
+  }
+  if (path !== ":memory:" && !initializeDatabase && !existsSync(path)) {
+    throw new Error(`Database initialization is disabled and the database does not exist: ${path}`);
   }
   const db = new DatabaseSync(path);
   db.exec("PRAGMA foreign_keys = ON;");
-  db.exec(SCHEMA);
-  ensureRoleColumn(db);
-  ensureCoverColumns(db);
-  ensureSelectedSuggestionColumn(db);
-  ensureSelectedMeetingColumn(db);
+  if (initializeDatabase) {
+    db.exec(SCHEMA);
+    ensureRoleColumn(db);
+    ensureCoverColumns(db);
+    ensureSelectedSuggestionColumn(db);
+    ensureSelectedMeetingColumn(db);
+  }
   return db;
 }
 

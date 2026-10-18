@@ -1,7 +1,14 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { openCore } from "@bookclub/core";
+import { addTestAdmin } from "../../../packages/core/test/support.ts";
 import { createApp } from "../src/app.ts";
+
+function coreWithAdmin() {
+  const core = openCore(":memory:");
+  addTestAdmin(core);
+  return core;
+}
 
 async function signIn(app: ReturnType<typeof createApp>, username: string, password: string): Promise<string> {
   const response = await app.handle({
@@ -16,7 +23,7 @@ async function signIn(app: ReturnType<typeof createApp>, username: string, passw
 }
 
 test("admins open suggestions and regular members add a remembered title", async () => {
-  const app = createApp({ core: openCore(":memory:") });
+  const app = createApp({ core: coreWithAdmin() });
   const admin = await signIn(app, "bow", "admin");
   const opened = await app.handle({
     method: "POST",
@@ -71,7 +78,7 @@ test("admins open suggestions and regular members add a remembered title", async
 });
 
 test("a member removes only their own book and an admin can remove any book", async () => {
-  const app = createApp({ core: openCore(":memory:") });
+  const app = createApp({ core: coreWithAdmin() });
   const admin = await signIn(app, "bow", "admin");
   await app.handle({ method: "POST", path: "/book-club/open", headers: { cookie: admin } });
   await app.handle({
@@ -157,7 +164,7 @@ function suggestionId(body: string, title: string): string {
 
 test("a found cover is shown and a missing cover stays text", async () => {
   const app = createApp({
-    core: openCore(":memory:"),
+    core: coreWithAdmin(),
     covers: async (title) => title === "Dune" ? 42 : null,
   });
   const admin = await signIn(app, "bow", "admin");
@@ -183,7 +190,7 @@ test("a found cover is shown and a missing cover stays text", async () => {
 });
 
 test("members cast one vote, can move it, and the most votes are listed first", async () => {
-  const app = createApp({ core: openCore(":memory:") });
+  const app = createApp({ core: coreWithAdmin() });
   const admin = await signIn(app, "bow", "admin");
   await app.handle({ method: "POST", path: "/book-club/open", headers: { cookie: admin } });
   await app.handle({
@@ -251,7 +258,7 @@ test("members cast one vote, can move it, and the most votes are listed first", 
 });
 
 test("an admin closes the call and a regular member sees the winning book alone", async () => {
-  const app = createApp({ core: openCore(":memory:") });
+  const app = createApp({ core: coreWithAdmin() });
   const admin = await signIn(app, "bow", "admin");
   await app.handle({ method: "POST", path: "/book-club/open", headers: { cookie: admin } });
   await app.handle({
@@ -300,7 +307,7 @@ test("an admin closes the call and a regular member sees the winning book alone"
 });
 
 test("a tie asks the admin to choose and hides that choice from a regular member", async () => {
-  const app = createApp({ core: openCore(":memory:") });
+  const app = createApp({ core: coreWithAdmin() });
   const admin = await signIn(app, "bow", "admin");
   await app.handle({ method: "POST", path: "/book-club/open", headers: { cookie: admin } });
   await app.handle({
@@ -343,7 +350,7 @@ test("a tie asks the admin to choose and hides that choice from a regular member
 });
 
 test("an admin starts over and the club opens for suggestions with an empty list", async () => {
-  const app = createApp({ core: openCore(":memory:") });
+  const app = createApp({ core: coreWithAdmin() });
   const admin = await signIn(app, "bow", "admin");
   await app.handle({ method: "POST", path: "/book-club/open", headers: { cookie: admin } });
   await app.handle({
@@ -382,7 +389,7 @@ test("an admin starts over and the club opens for suggestions with an empty list
 
 test("several matching books ask which one to add", async () => {
   const app = createApp({
-    core: openCore(":memory:"),
+    core: coreWithAdmin(),
     matches: async (title) => {
       if (title === "Born to Run") {
         return [
@@ -448,7 +455,7 @@ test("several matching books ask which one to add", async () => {
 });
 
 test("members vote for meeting times and a regular member sees the chosen date", async () => {
-  const app = createApp({ core: openCore(":memory:") });
+  const app = createApp({ core: coreWithAdmin() });
   const admin = await signIn(app, "bow", "admin");
   await app.handle({ method: "POST", path: "/book-club/open", headers: { cookie: admin } });
   await app.handle({

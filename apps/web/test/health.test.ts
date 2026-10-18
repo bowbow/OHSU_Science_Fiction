@@ -2,6 +2,17 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { openCore } from "@bookclub/core";
 import { createApp } from "../src/app.ts";
+import { loadConfig } from "../src/config.ts";
+
+test("database initialization is configurable and defaults on locally", () => {
+  assert.equal(loadConfig({}).initializeDatabase, true);
+  assert.equal(loadConfig({ BOOKCLUB_INITIALIZE_DATABASE: "false" }).initializeDatabase, false);
+  assert.equal(loadConfig({ BOOKCLUB_INITIALIZE_DATABASE: "true" }).initializeDatabase, true);
+  assert.throws(
+    () => loadConfig({ BOOKCLUB_INITIALIZE_DATABASE: "sometimes" }),
+    /BOOKCLUB_INITIALIZE_DATABASE must be 'true' or 'false'/,
+  );
+});
 
 test("health reports availability without exposing club data", async () => {
   const core = openCore(":memory:");

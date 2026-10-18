@@ -25,6 +25,7 @@ cat >/etc/bookclub.env <<'EOF'
 PORT=3000
 PUBLIC_BASE_URL=http://localhost
 BOOKCLUB_SQLITE_PATH=/var/lib/bookclub/bookclub.sqlite
+BOOKCLUB_INITIALIZE_DATABASE=false
 EOF
 chmod 0644 /etc/bookclub.env
 

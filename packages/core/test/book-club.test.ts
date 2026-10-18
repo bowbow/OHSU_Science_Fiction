@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { openCore } from "../src/index.ts";
+import { addTestAdmin } from "./support.ts";
 
 function adminSession() {
   const core = openCore(":memory:");
+  addTestAdmin(core);
   const admin = core.signInWithPassword({ username: "bow", password: "admin" });
   assert.equal(admin.ok, true);
   if (!admin.ok) {

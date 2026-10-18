@@ -1,5 +1,8 @@
 import type { MemberView } from "@bookclub/core";
 
+export const SITE_NAME = "OHSU Science Fiction Bookclub";
+export const NAV_SITE_NAME = "OHSU SF Bookclub";
+
 export function escapeHtml(value: string): string {
   return value
     .replaceAll("&", "&amp;")
@@ -48,8 +51,20 @@ export function page(options: {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>${escapeHtml(options.title)} · Welcome to the Bookclub</title>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap">
+  <title>${escapeHtml(options.title)} · ${SITE_NAME}</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Orbitron:wght@500;600;700&display=swap">
+  <script>
+    (() => {
+      try {
+        const requestedVariant = new URLSearchParams(window.location.search).get("variant");
+        if (requestedVariant === "scifi") sessionStorage.setItem("site-variant", "scifi");
+        if (requestedVariant === "classic") sessionStorage.removeItem("site-variant");
+        if (sessionStorage.getItem("site-variant") === "scifi") {
+          document.documentElement.dataset.variant = "scifi";
+        }
+      } catch {}
+    })();
+  </script>
   <style>
     :root {
       --paper: #ffffff;
@@ -520,17 +535,448 @@ export function page(options: {
       .calendar th { font-size: 0.6rem; }
       .calendar .cal-hit { font-size: 0.65rem; }
     }
+
+    /* Variant B: a tab-scoped sci-fi treatment for local A/B comparison. */
+    html[data-variant="scifi"] {
+      color-scheme: dark;
+      --hud-bg: #020708;
+      --hud-panel: #061012;
+      --hud-panel-deep: #030a0c;
+      --hud-teal: #57ded3;
+      --hud-blue: #53a7ff;
+      --hud-text: #d9f7f4;
+      --hud-muted: #7fa5a4;
+      --hud-line: rgba(87, 222, 211, 0.42);
+      background: var(--hud-bg);
+    }
+    html[data-variant="scifi"] body {
+      color: var(--hud-text);
+      cursor: url("/assets/target-cursor.svg") 16 16, crosshair;
+      background:
+        radial-gradient(circle at 84% 10%, rgba(83, 167, 255, 0.11), transparent 30rem),
+        radial-gradient(circle at 20% 74%, rgba(87, 222, 211, 0.08), transparent 34rem),
+        var(--hud-bg);
+    }
+    html[data-variant="scifi"] body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      pointer-events: none;
+      opacity: 0.12;
+      background: repeating-linear-gradient(
+        180deg,
+        transparent 0,
+        transparent 3px,
+        rgba(87, 222, 211, 0.14) 4px
+      );
+      mix-blend-mode: screen;
+    }
+    html[data-variant="scifi"] .layout {
+      position: relative;
+      isolation: isolate;
+      grid-template-columns: 13rem minmax(0, 1fr);
+      background: linear-gradient(135deg, #041012, #020708 62%);
+    }
+    html[data-variant="scifi"] .layout > main {
+      position: relative;
+      z-index: 1;
+    }
+    html[data-variant="scifi"] .layout::after {
+      content: "";
+      position: fixed;
+      z-index: 0;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(rgba(87, 222, 211, 0.025) 1px, transparent 1px) 0 0 / 2rem 2rem,
+        linear-gradient(90deg, rgba(87, 222, 211, 0.025) 1px, transparent 1px) 0 0 / 2rem 2rem,
+        linear-gradient(rgba(2, 9, 11, 0.5), rgba(2, 7, 8, 0.68)),
+        url("/assets/starfield.jpg") center center / cover no-repeat;
+      filter: saturate(0.72) contrast(1.06) brightness(0.76);
+    }
+    html[data-variant="scifi"] .layout::before {
+      content: "";
+      position: fixed;
+      z-index: -1;
+      left: 13rem;
+      right: 0;
+      bottom: -9rem;
+      height: 28rem;
+      opacity: 0.2;
+      transform: perspective(28rem) rotateX(58deg);
+      transform-origin: bottom;
+      background-image:
+        linear-gradient(rgba(87, 222, 211, 0.4) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(87, 222, 211, 0.4) 1px, transparent 1px);
+      background-size: 3rem 3rem;
+      mask-image: linear-gradient(to top, black, transparent 88%);
+    }
+    html[data-variant="scifi"] aside {
+      position: relative;
+      z-index: 2;
+      padding: 2rem 1.15rem;
+      background: rgba(2, 9, 11, 0.92);
+      box-shadow: 12px 0 42px rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(16px);
+    }
+    html[data-variant="scifi"] aside::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: -1px;
+      bottom: 0;
+      width: 10px;
+      pointer-events: none;
+      background: var(--hud-line);
+      clip-path: polygon(
+        9px 0, 10px 0, 10px 34%, 3px calc(34% + 7px), 3px calc(66% - 7px),
+        10px 66%, 10px 100%, 9px 100%, 9px calc(66% + 1px), 2px calc(66% - 6px),
+        2px calc(34% + 6px), 9px calc(34% - 1px)
+      );
+      filter: drop-shadow(0 0 4px rgba(87, 222, 211, 0.18));
+    }
+    html[data-variant="scifi"] aside::after {
+      content: "NAV // 01";
+      position: absolute;
+      left: 1.15rem;
+      bottom: 1.2rem;
+      color: rgba(87, 222, 211, 0.48);
+      font: 500 0.58rem/1 "Orbitron", sans-serif;
+      letter-spacing: 0.22em;
+    }
+    html[data-variant="scifi"] .mark,
+    html[data-variant="scifi"] main h2 {
+      font-family: "Orbitron", "Segoe UI", sans-serif;
+      text-transform: uppercase;
+    }
+    html[data-variant="scifi"] .mark {
+      margin-bottom: 2.5rem;
+      color: #9bf4ec;
+      font-size: 0.78rem;
+      line-height: 1.55;
+      letter-spacing: 0.12em;
+      text-shadow: 0 0 16px rgba(87, 222, 211, 0.48);
+    }
+    html[data-variant="scifi"] .sun {
+      width: 0.8rem;
+      height: 0.8rem;
+      margin-right: 0.6rem;
+      border: 1px solid var(--hud-text);
+      border-radius: 0;
+      background: var(--hud-teal);
+      box-shadow: 0 0 6px var(--hud-teal), 0 0 18px var(--hud-teal);
+      transform: rotate(45deg);
+    }
+    html[data-variant="scifi"] .signed-in-name { color: #ffffff; }
+    html[data-variant="scifi"] .member-role { color: #8fc6ff; }
+    html[data-variant="scifi"] nav {
+      gap: 0.65rem;
+      filter:
+        drop-shadow(0 0 7px rgba(87, 222, 211, 0.58))
+        drop-shadow(0 0 18px rgba(83, 167, 255, 0.3));
+      transition: filter 150ms ease;
+    }
+    html[data-variant="scifi"] nav:hover {
+      filter:
+        drop-shadow(0 0 9px rgba(87, 222, 211, 0.72))
+        drop-shadow(0 0 24px rgba(83, 167, 255, 0.42));
+    }
+    html[data-variant="scifi"] a,
+    html[data-variant="scifi"] button,
+    html[data-variant="scifi"] summary,
+    html[data-variant="scifi"] label[for] {
+      cursor: url("/assets/target-cursor.svg") 16 16, crosshair;
+    }
+    html[data-variant="scifi"] input { cursor: text; }
+    html[data-variant="scifi"] nav a,
+    html[data-variant="scifi"] nav button {
+      border: 1px solid rgba(87, 222, 211, 0.24);
+      border-radius: 0;
+      clip-path: polygon(0 0, calc(100% - 0.7rem) 0, 100% 0.7rem, 100% 100%, 0.7rem 100%, 0 calc(100% - 0.7rem));
+      color: #bff9f4;
+      background: rgba(4, 17, 20, 0.72);
+      letter-spacing: 0.12em;
+      filter:
+        drop-shadow(0 0 5px rgba(87, 222, 211, 0.4))
+        drop-shadow(0 0 12px rgba(83, 167, 255, 0.18));
+      transition: color 150ms ease, background 150ms ease, filter 150ms ease;
+    }
+    html[data-variant="scifi"] nav a[aria-current="page"],
+    html[data-variant="scifi"] nav a:hover,
+    html[data-variant="scifi"] nav button:hover {
+      color: #021012;
+      background: var(--hud-teal);
+      box-shadow: 0 0 20px rgba(87, 222, 211, 0.4);
+      filter:
+        drop-shadow(0 0 7px rgba(87, 222, 211, 0.66))
+        drop-shadow(0 0 18px rgba(83, 167, 255, 0.34));
+    }
+    html[data-variant="scifi"] nav > form button {
+      color: #021012;
+      background: var(--hud-teal);
+    }
+    html[data-variant="scifi"] .banner {
+      min-height: 12.5rem;
+      margin: 1rem 1.25rem 0;
+      padding: 4.8rem 3.5rem 2.2rem;
+      border: 1px solid var(--hud-line);
+      clip-path: polygon(
+        0 1.1rem, 1.1rem 0, 18% 0, calc(18% + 0.7rem) 0.7rem,
+        32% 0.7rem, calc(32% + 0.7rem) 0, calc(100% - 1rem) 0, 100% 1rem,
+        100% 72%, calc(100% - 0.55rem) calc(72% + 0.55rem),
+        calc(100% - 0.55rem) calc(88% - 0.55rem), 100% 88%,
+        100% 100%, 68% 100%, calc(68% - 0.55rem) calc(100% - 0.55rem),
+        46% calc(100% - 0.55rem), calc(46% - 0.55rem) 100%, 0 100%
+      );
+      background:
+        linear-gradient(90deg, var(--hud-teal), transparent) 3rem 1.1rem / 8rem 1px no-repeat,
+        linear-gradient(90deg, var(--hud-blue), transparent) right 2rem top 0.35rem / 9rem 1px no-repeat,
+        linear-gradient(90deg, rgba(87, 222, 211, 0.08), transparent 44%),
+        linear-gradient(180deg, rgba(83, 167, 255, 0.07), transparent),
+        rgba(2, 9, 11, 0.58);
+      box-shadow: inset 0 0 32px rgba(87, 222, 211, 0.025), 0 0 18px rgba(83, 167, 255, 0.06);
+    }
+    html[data-variant="scifi"] .banner::before {
+      content: "ARCHIVE NODE  //  OHSU-07  //  ONLINE";
+      position: absolute;
+      top: 2.2rem;
+      left: 3.5rem;
+      color: var(--hud-teal);
+      font: 600 0.62rem/1 "Orbitron", sans-serif;
+      letter-spacing: 0.22em;
+    }
+    html[data-variant="scifi"] .banner::after {
+      width: 23rem;
+      height: 23rem;
+      right: -5rem;
+      top: -10rem;
+      border: 1px solid rgba(87, 222, 211, 0.26);
+      background:
+        radial-gradient(circle, transparent 52%, rgba(83, 167, 255, 0.11) 53% 54%, transparent 55%),
+        repeating-radial-gradient(circle, transparent 0 1.6rem, rgba(87, 222, 211, 0.09) 1.65rem 1.7rem);
+      box-shadow: 0 0 52px rgba(83, 167, 255, 0.1), inset 0 0 42px rgba(87, 222, 211, 0.05);
+    }
+    html[data-variant="scifi"] .banner h1 {
+      max-width: 50rem;
+      color: #ffffff;
+      font-family: "Orbitron", "Segoe UI", sans-serif;
+      font-size: clamp(2rem, 5vw, 4rem);
+      letter-spacing: 0.04em;
+      text-shadow: -2px 0 var(--hud-blue), 2px 0 var(--hud-teal), 0 0 28px rgba(87, 222, 211, 0.22);
+    }
+    html[data-variant="scifi"] .content {
+      position: relative;
+      margin: 0 1.25rem 1.25rem;
+      padding: 2.5rem 3.5rem 4rem;
+      background:
+        linear-gradient(rgba(87, 222, 211, 0.28), rgba(87, 222, 211, 0.28)) left top / 1px 31% no-repeat,
+        linear-gradient(135deg, transparent 45%, var(--hud-line) 47% 53%, transparent 55%) left 31% / 9px 9px no-repeat,
+        linear-gradient(rgba(87, 222, 211, 0.28), rgba(87, 222, 211, 0.28)) left bottom / 1px calc(69% - 9px) no-repeat,
+        linear-gradient(rgba(87, 222, 211, 0.28), rgba(87, 222, 211, 0.28)) right top / 1px 58% no-repeat,
+        linear-gradient(45deg, transparent 45%, var(--hud-line) 47% 53%, transparent 55%) right 58% / 9px 9px no-repeat,
+        linear-gradient(rgba(87, 222, 211, 0.28), rgba(87, 222, 211, 0.28)) right bottom / 1px calc(42% - 9px) no-repeat,
+        linear-gradient(90deg, var(--hud-teal), transparent) left bottom / 8rem 1px no-repeat,
+        linear-gradient(270deg, var(--hud-blue), transparent) right bottom / 8rem 1px no-repeat,
+        rgba(2, 8, 10, 0.34);
+      box-shadow: inset 0 -18px 42px rgba(83, 167, 255, 0.025);
+    }
+    html[data-variant="scifi"] .content::before {
+      content: "";
+      position: absolute;
+      top: -1px;
+      left: 0;
+      right: 0;
+      height: 10px;
+      pointer-events: none;
+      background: var(--hud-line);
+      clip-path: polygon(
+        0 0, 38% 0, calc(38% + 8px) 8px, calc(54% - 8px) 8px, 54% 0,
+        100% 0, 100% 1px, calc(54% + 1px) 1px, calc(54% - 7px) 9px,
+        calc(38% + 7px) 9px, calc(38% - 1px) 1px, 0 1px
+      );
+    }
+    html[data-variant="scifi"] main h2 {
+      color: #9bf4ec;
+      font-size: 0.82rem;
+      letter-spacing: 0.2em;
+      text-shadow: 0 0 14px rgba(87, 222, 211, 0.4);
+    }
+    html[data-variant="scifi"] main h2::before { content: "[ "; color: var(--hud-blue); }
+    html[data-variant="scifi"] main h2::after { content: " ]"; color: var(--hud-blue); }
+    html[data-variant="scifi"] main a { color: var(--hud-teal); }
+    html[data-variant="scifi"] .sheet,
+    html[data-variant="scifi"] .matches li,
+    html[data-variant="scifi"] .calendar,
+    html[data-variant="scifi"] .meetings li {
+      color: var(--hud-text);
+      border: 1px solid rgba(87, 222, 211, 0.34);
+      border-radius: 0.25rem;
+      background:
+        linear-gradient(90deg, var(--hud-teal), transparent) left top / 4.75rem 1px no-repeat,
+        linear-gradient(180deg, var(--hud-teal), transparent) left top / 1px 4.75rem no-repeat,
+        linear-gradient(270deg, var(--hud-blue), transparent) right bottom / 4.75rem 1px no-repeat,
+        linear-gradient(0deg, var(--hud-blue), transparent) right bottom / 1px 4.75rem no-repeat,
+        linear-gradient(145deg, rgba(6, 18, 21, 0.94), rgba(2, 9, 11, 0.97));
+      box-shadow: 0 0 0 1px rgba(83, 167, 255, 0.05), 0 18px 48px rgba(0, 0, 0, 0.4), inset 0 0 28px rgba(87, 222, 211, 0.025);
+      clip-path: polygon(
+        0 0, calc(100% - 1.2rem) 0, 100% 1.2rem,
+        100% 38%, calc(100% - 0.45rem) calc(38% + 0.45rem),
+        calc(100% - 0.45rem) calc(62% - 0.45rem), 100% 62%,
+        100% 100%, 1.2rem 100%, 0 calc(100% - 1.2rem),
+        0 68%, 0.45rem calc(68% - 0.45rem),
+        0.45rem calc(46% + 0.45rem), 0 46%
+      );
+    }
+    html[data-variant="scifi"] .books { gap: 2rem 1.25rem; }
+    html[data-variant="scifi"] .book-stack,
+    html[data-variant="scifi"] .winner .book-stack {
+      position: relative;
+      width: min(100%, 14rem);
+      min-height: 23rem;
+      padding: 3.4rem 1.65rem 2rem;
+      gap: 0.7rem;
+      color: var(--hud-text);
+      background: url("/assets/book-card.svg?v=3") center center / 100% 100% no-repeat;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+      filter:
+        drop-shadow(0 16px 24px rgba(0, 0, 0, 0.5))
+        drop-shadow(0 0 12px rgba(87, 222, 211, 0.2));
+    }
+    html[data-variant="scifi"] .book-stack:not(:has(.cover)) {
+      min-height: 17rem;
+      justify-content: center;
+      padding-top: 4.2rem;
+    }
+    html[data-variant="scifi"] .book-stack > .votes {
+      position: absolute;
+      top: 1.65rem;
+      left: 1.9rem;
+      max-width: 7.5rem;
+      overflow: hidden;
+      color: #031014;
+      font-family: "Orbitron", sans-serif;
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-overflow: ellipsis;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    html[data-variant="scifi"] .book-stack .book-title { color: #d9f7f4; }
+    html[data-variant="scifi"] .book-stack .book-actions {
+      padding: 0.25rem 0.2rem 0.35rem;
+      border-top: 1px solid rgba(87, 222, 211, 0.22);
+    }
+    html[data-variant="scifi"] .book-stack .your-vote {
+      border: 1px solid rgba(87, 222, 211, 0.52);
+      background: linear-gradient(90deg, rgba(35, 108, 114, 0.95), rgba(20, 69, 83, 0.95));
+      box-shadow: 0 0 12px rgba(87, 222, 211, 0.24);
+      font-family: "Orbitron", sans-serif;
+      font-size: 0.66rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    html[data-variant="scifi"] input {
+      color: #ffffff;
+      border: 1px solid rgba(87, 222, 211, 0.4);
+      border-radius: 0;
+      background: rgba(2, 10, 12, 0.88);
+      box-shadow: inset 0 0 16px rgba(87, 222, 211, 0.04);
+    }
+    html[data-variant="scifi"] input:focus {
+      outline: 1px solid var(--hud-teal);
+      box-shadow: 0 0 18px rgba(87, 222, 211, 0.24), inset 0 0 16px rgba(87, 222, 211, 0.07);
+    }
+    html[data-variant="scifi"] button {
+      border: 1px solid var(--hud-teal);
+      border-radius: 0;
+      clip-path: polygon(0.65rem 0, 100% 0, 100% calc(100% - 0.65rem), calc(100% - 0.65rem) 100%, 0 100%, 0 0.65rem);
+      color: #021012;
+      background: var(--hud-teal);
+      font-family: "Orbitron", sans-serif;
+      font-size: 0.72rem;
+      letter-spacing: 0.06em;
+      box-shadow: 0 0 16px rgba(87, 222, 211, 0.18);
+      filter:
+        drop-shadow(0 0 5px rgba(87, 222, 211, 0.44))
+        drop-shadow(0 0 13px rgba(83, 167, 255, 0.2));
+      transition: color 150ms ease, background 150ms ease, border-color 150ms ease, filter 150ms ease;
+    }
+    html[data-variant="scifi"] button:hover {
+      color: #ffffff;
+      background: var(--hud-blue);
+      border-color: #9bceff;
+      box-shadow: 0 0 24px rgba(83, 167, 255, 0.38);
+      filter:
+        drop-shadow(0 0 8px rgba(83, 167, 255, 0.68))
+        drop-shadow(0 0 20px rgba(87, 222, 211, 0.32));
+    }
+    html[data-variant="scifi"] button.quiet {
+      color: #8fc6ff;
+      border-color: var(--hud-blue);
+      background: rgba(83, 167, 255, 0.08);
+    }
+    html[data-variant="scifi"] .cover {
+      border: 1px solid rgba(87, 222, 211, 0.5);
+      border-radius: 0.15rem;
+      box-shadow: 0 0 0 4px rgba(87, 222, 211, 0.035), 0 16px 30px rgba(0, 0, 0, 0.55), 0 0 22px rgba(83, 167, 255, 0.12);
+    }
+    html[data-variant="scifi"] .votes,
+    html[data-variant="scifi"] .meeting-note,
+    html[data-variant="scifi"] .meeting-chosen,
+    html[data-variant="scifi"] .matches p { color: var(--hud-muted); }
+    html[data-variant="scifi"] .your-vote,
+    html[data-variant="scifi"] .calendar .cal-hit { background: #236c72; }
+    html[data-variant="scifi"] .calendar th { color: var(--hud-teal); }
+    html[data-variant="scifi"] dialog.confirm {
+      color: var(--hud-text);
+      border: 1px solid var(--hud-teal);
+      border-radius: 0;
+      background: #041012;
+      box-shadow: 0 0 48px rgba(87, 222, 211, 0.2);
+    }
+    html[data-variant="scifi"] dialog.confirm::backdrop { background: rgba(0, 3, 12, 0.78); }
+    @media (max-width: 700px) {
+      html[data-variant="scifi"] .layout { grid-template-columns: 1fr; }
+      html[data-variant="scifi"] .layout::before { left: 0; }
+      html[data-variant="scifi"] aside {
+        padding: 0.9rem 1rem 0;
+        border-right: 0;
+      }
+      html[data-variant="scifi"] aside::before {
+        top: auto;
+        right: 0;
+        bottom: -1px;
+        left: 0;
+        width: auto;
+        height: 9px;
+        clip-path: polygon(
+          0 0, 36% 0, calc(36% + 7px) 7px, calc(62% - 7px) 7px,
+          62% 0, 100% 0, 100% 1px, calc(62% + 1px) 1px,
+          calc(62% - 6px) 8px, calc(36% + 6px) 8px, calc(36% - 1px) 1px, 0 1px
+        );
+      }
+      html[data-variant="scifi"] aside::after { display: none; }
+      html[data-variant="scifi"] .mark { margin: 0; }
+      html[data-variant="scifi"] .banner { min-height: 10rem; margin: 0.6rem 0.6rem 0; padding: 4.2rem 1.2rem 1.3rem; }
+      html[data-variant="scifi"] .banner::before { top: 1.8rem; left: 1.2rem; font-size: 0.52rem; }
+      html[data-variant="scifi"] .banner h1 { font-size: clamp(1.65rem, 9vw, 2.5rem); }
+      html[data-variant="scifi"] .content { margin: 0 0.6rem 0.6rem; padding: 1.4rem 1.2rem 3rem; }
+    }
   </style>
 </head>
 <body>
   <div class="layout">
     <aside>
-      <p class="mark"><span class="sun" aria-hidden="true"></span>Bookclub</p>
+      <p class="mark"><span class="sun" aria-hidden="true"></span>${NAV_SITE_NAME}</p>
       ${name}
       <nav aria-label="Options">${nav}</nav>
     </aside>
     <main>
-      <header class="banner"><h1>Welcome to the Bookclub</h1></header>
+      <header class="banner"><h1>${SITE_NAME}</h1></header>
       <div class="content">
         <h2>${escapeHtml(options.heading ?? options.title)}</h2>
         ${options.body}

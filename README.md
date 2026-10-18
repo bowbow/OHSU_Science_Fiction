@@ -14,6 +14,22 @@ npm start
 
 The local database defaults to `data/bookclub.sqlite`.
 
+Database initialization is enabled by default for local development. Set
+`BOOKCLUB_INITIALIZE_DATABASE=false` to require an existing database and skip all
+automatic table creation and schema upgrades. Production sets this to `false` so
+application startup does not change the schema. Administrator accounts are never
+created automatically by application startup.
+
+Download the production activity log through Systems Manager (no SSH required):
+
+```powershell
+./scripts/download-activity-log.ps1 -AwsProfile default
+```
+
+The default destination is a timestamped `.log` file under `data/`. Use
+`-OutputPath .\activity.log` to choose a different local destination. The EC2
+instance must be running and online in Systems Manager.
+
 ## AWS deployment
 
 The production deployment is defined in [specs/010-deploy-aws-ec2](specs/010-deploy-aws-ec2). It uses one Amazon Linux EC2 instance in `us-east-1`, an Elastic IP, Nginx, systemd, Systems Manager, and a private S3 release bucket. Docker and inbound SSH are not required. The instance stops at 9:00pm Pacific and starts at 7:00am Pacific. The disk and public address stay in place, and the site is unreachable while the instance is stopped.

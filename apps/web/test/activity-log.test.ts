@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
 import { openCore } from "@bookclub/core";
+import { addTestAdmin } from "../../../packages/core/test/support.ts";
 import { createActivityLog } from "../src/activity-log.ts";
 import { createApp } from "../src/app.ts";
 
@@ -16,6 +17,7 @@ test("successful club actions are recorded and refusals are not", async () => {
   const filePath = join(directory, "activity.log");
   const lines: string[] = [];
   const core = openCore(":memory:");
+  addTestAdmin(core);
   const app = createApp({
     core,
     activityLog: createActivityLog(filePath, (line) => {

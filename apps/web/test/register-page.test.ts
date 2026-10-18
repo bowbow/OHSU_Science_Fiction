@@ -8,7 +8,11 @@ test("the register form hides the password and does not show it after submit", a
     core: openCore(":memory:"),
   });
   const page = await app.handle({ method: "GET", path: "/register", headers: {} });
-  assert.match(page.body, /Welcome to the Bookclub/);
+  assert.match(page.body, /<title>Register · OHSU Science Fiction Bookclub<\/title>/);
+  assert.match(page.body, /<p class="mark">[\s\S]*OHSU SF Bookclub<\/p>/);
+  assert.match(page.body, /<header class="banner"><h1>OHSU Science Fiction Bookclub<\/h1><\/header>/);
+  assert.match(page.body, /sessionStorage\.setItem\("site-variant", "scifi"\)/);
+  assert.match(page.body, /html\[data-variant="scifi"\]/);
   assert.equal(page.body.includes('class="signed-in-name"'), false);
   assert.match(page.body, /<aside>[\s\S]*href="\/register" aria-current="page"[\s\S]*Sign in[\s\S]*<\/aside>/);
   assert.equal(/gmail|accounts\.google|sign in with google/i.test(page.body), false);
@@ -37,7 +41,7 @@ test("the register form hides the password and does not show it after submit", a
   assert.match(account.body, /<aside>[\s\S]*Ada[\s\S]*Sign out[\s\S]*<\/aside>/);
   assert.equal(account.body.includes('href="/book-club"'), false);
   assert.equal(account.body.includes('href="/account"'), false);
-  assert.match(account.body, /<main>[\s\S]*Welcome to the Bookclub[\s\S]*You are signed in as Ada[\s\S]*You are a regular member/);
+  assert.match(account.body, /<main>[\s\S]*OHSU Science Fiction Bookclub[\s\S]*You are signed in as Ada[\s\S]*You are a regular member/);
 
   const google = await app.handle({ method: "POST", path: "/register/google", headers: {}, body: "" });
   assert.equal(google.status, 404);

@@ -3,10 +3,9 @@ import { bookClubRounds as bookClubRoundsFn, closeBookClub as closeBookClubFn, e
 export { findOpenLibraryBooks, findOpenLibraryCoverId } from "./covers.ts";
 export type { CatalogBook } from "./covers.ts";
 import { proposeMeetingTime as proposeMeetingTimeFn, removeMeetingTime as removeMeetingTimeFn, selectMeetingTime as selectMeetingTimeFn, voteForMeetingTime as voteForMeetingTimeFn, withdrawMeetingVote as withdrawMeetingVoteFn } from "./meeting.ts";
-import { openDatabase } from "./db.ts";
+import { openDatabase, type OpenDatabaseOptions } from "./db.ts";
 import { registerWithPassword as registerWithPasswordFn } from "./register-password.ts";
 import { currentMember as currentMemberFn, endSession } from "./session.ts";
-import { seedAdminMembers } from "./seed-admins.ts";
 import { signInWithPassword as signInWithPasswordFn } from "./sign-in-password.ts";
 
 export { activityLine, activitySentence } from "./activity.ts";
@@ -98,8 +97,7 @@ export class Core {
   }
 }
 
-export function openCore(path: string): Core {
-  const db = openDatabase(path);
-  seedAdminMembers(db);
+export function openCore(path: string, options: OpenDatabaseOptions = {}): Core {
+  const db = openDatabase(path, options);
   return new Core(db);
 }
