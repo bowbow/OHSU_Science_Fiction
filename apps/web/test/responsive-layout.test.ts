@@ -22,7 +22,13 @@ test("phone navigation and touch interaction receive dedicated rules", () => {
   assert.match(source, /@media \(max-width:\s*700px\)[\s\S]*?aside\s*\{[^}]*display:\s*grid/);
   assert.match(source, /@media \(max-width:\s*700px\)[\s\S]*?nav\s*\{[^}]*flex-direction:\s*row/);
   assert.match(source, /@media \(hover:\s*none\),\s*\(pointer:\s*coarse\)/);
-  assert.match(source, /@media \(hover:\s*none\),\s*\(pointer:\s*coarse\)[\s\S]*?\.cover:hover\s*\{[^}]*transform:\s*none/);
+  assert.match(source, /@media \(hover:\s*none\),\s*\(pointer:\s*coarse\)[\s\S]*?\.cover-float\s*\{[^}]*animation:\s*none/);
+});
+
+test("book covers do not react to hover", () => {
+  assert.doesNotMatch(source, /\.cover:hover\s*\{/);
+  assert.doesNotMatch(source, /:has\(\.cover:hover\)/);
+  assert.doesNotMatch(source, /\.cover-float:hover/);
 });
 
 test("narrow forms, dialogs, calendars, and controls are constrained", () => {

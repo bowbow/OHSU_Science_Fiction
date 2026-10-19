@@ -25,17 +25,21 @@ function adminSession() {
   return { core, adminId: admin.sessionId, regularId: regular.sessionId };
 }
 
-test("only an admin can open suggestions, and a regular member cannot suggest before that", () => {
+test("only an admin can open suggestions or add books", () => {
   const { core, adminId, regularId } = adminSession();
   assert.deepEqual(core.openBookClub(regularId), { ok: false, failure: { code: "not_an_admin" } });
   assert.deepEqual(core.suggestBook({ sessionId: regularId, title: "The Hobbit" }), {
     ok: false,
-    failure: { code: "suggestions_closed" },
+    failure: { code: "not_an_admin" },
   });
   assert.deepEqual(core.bookClubRounds(null), { ok: false, failure: { code: "not_signed_in" } });
 
   const opened = core.openBookClub(adminId);
   assert.equal(opened.ok, true);
+  assert.deepEqual(core.suggestBook({ sessionId: regularId, title: "The Hobbit" }), {
+    ok: false,
+    failure: { code: "not_an_admin" },
+  });
   const rounds = core.bookClubRounds(adminId);
   assert.equal(rounds.ok, true);
   if (!rounds.ok) {
@@ -46,18 +50,18 @@ test("only an admin can open suggestions, and a regular member cannot suggest be
   assert.deepEqual(rounds.value[0]?.suggestions, []);
 });
 
-test("a regular member suggestion is remembered and duplicates are refused", () => {
+test("an admin suggestion is remembered and duplicates are refused", () => {
   const { core, adminId, regularId } = adminSession();
   assert.equal(core.openBookClub(adminId).ok, true);
   assert.equal(core.suggestBook({ sessionId: adminId, title: "Dune" }).ok, true);
-  assert.deepEqual(core.suggestBook({ sessionId: regularId, title: "   " }), {
+  assert.deepEqual(core.suggestBook({ sessionId: adminId, title: "   " }), {
     ok: false,
     failure: { code: "title_empty" },
   });
 
-  const suggested = core.suggestBook({ sessionId: regularId, title: "  The   Hobbit " });
+  const suggested = core.suggestBook({ sessionId: adminId, title: "  The   Hobbit " });
   assert.deepEqual(suggested, { ok: true, value: { title: "The Hobbit" } });
-  assert.deepEqual(core.suggestBook({ sessionId: regularId, title: "the hobbit" }), {
+  assert.deepEqual(core.suggestBook({ sessionId: adminId, title: "the hobbit" }), {
     ok: false,
     failure: { code: "already_suggested" },
   });
@@ -75,7 +79,7 @@ test("a regular member suggestion is remembered and duplicates are refused", () 
   }
   assert.deepEqual(listed(rounds.value[0]?.suggestions ?? []), [
     { title: "Dune", suggestedBy: "bow" },
-    { title: "The Hobbit", suggestedBy: "Ada" },
+    { title: "The Hobbit", suggestedBy: "bow" },
   ]);
 });
 
@@ -86,7 +90,7 @@ test("opening suggestions again keeps the same club and the same books", () => {
   if (!first.ok) {
     return;
   }
-  assert.equal(core.suggestBook({ sessionId: regularId, title: "The Hobbit" }).ok, true);
+  assert.equal(core.suggestBook({ sessionId: adminId, title: "The Hobbit" }).ok, true);
   const second = core.openBookClub(adminId);
   assert.equal(second.ok, true);
   if (!second.ok) {
@@ -100,15 +104,15 @@ test("opening suggestions again keeps the same club and the same books", () => {
   }
   assert.equal(rounds.value.length, 1);
   assert.equal(rounds.value[0]?.status, "open_for_suggestions");
-  assert.deepEqual(listed(rounds.value[0]?.suggestions ?? []), [{ title: "The Hobbit", suggestedBy: "Ada" }]);
+  assert.deepEqual(listed(rounds.value[0]?.suggestions ?? []), [{ title: "The Hobbit", suggestedBy: "bow" }]);
 });
 
-test("a member can remove their own suggestion and an admin can remove any suggestion", () => {
+test("only an admin can remove a suggestion", () => {
   const { core, adminId, regularId } = adminSession();
   assert.equal(core.openBookClub(adminId).ok, true);
   assert.equal(core.suggestBook({ sessionId: adminId, title: "Dune" }).ok, true);
-  assert.equal(core.suggestBook({ sessionId: regularId, title: "The Hobbit" }).ok, true);
-  assert.equal(core.suggestBook({ sessionId: regularId, title: "Dune Messiah" }).ok, true);
+  assert.equal(core.suggestBook({ sessionId: adminId, title: "The Hobbit" }).ok, true);
+  assert.equal(core.suggestBook({ sessionId: adminId, title: "Dune Messiah" }).ok, true);
 
   const before = core.bookClubRounds(regularId);
   assert.equal(before.ok, true);
@@ -122,20 +126,20 @@ test("a member can remove their own suggestion and an admin can remove any sugge
 
   assert.deepEqual(core.removeBookSuggestion({ sessionId: regularId, suggestionId: dune.id }), {
     ok: false,
-    failure: { code: "not_your_suggestion" },
+    failure: { code: "not_an_admin" },
   });
   assert.deepEqual(core.removeBookSuggestion({ sessionId: null, suggestionId: hobbit.id }), {
     ok: false,
     failure: { code: "not_signed_in" },
   });
-  assert.deepEqual(core.removeBookSuggestion({ sessionId: regularId, suggestionId: hobbit.id }), {
+  assert.deepEqual(core.removeBookSuggestion({ sessionId: adminId, suggestionId: hobbit.id }), {
     ok: true,
-    value: { title: "The Hobbit", suggestedBy: "Ada" },
+    value: { title: "The Hobbit", suggestedBy: "bow" },
   });
-  assert.equal(core.suggestBook({ sessionId: regularId, title: "The Hobbit" }).ok, true);
+  assert.equal(core.suggestBook({ sessionId: adminId, title: "The Hobbit" }).ok, true);
   assert.deepEqual(core.removeBookSuggestion({ sessionId: adminId, suggestionId: messiah.id }), {
     ok: true,
-    value: { title: "Dune Messiah", suggestedBy: "Ada" },
+    value: { title: "Dune Messiah", suggestedBy: "bow" },
   });
   assert.deepEqual(core.removeBookSuggestion({ sessionId: adminId, suggestionId: messiah.id }), {
     ok: false,
@@ -149,7 +153,7 @@ test("a member can remove their own suggestion and an admin can remove any sugge
   }
   assert.deepEqual(listed(after.value[0]?.suggestions ?? []), [
     { title: "Dune", suggestedBy: "bow" },
-    { title: "The Hobbit", suggestedBy: "Ada" },
+    { title: "The Hobbit", suggestedBy: "bow" },
   ]);
 });
 
@@ -161,7 +165,7 @@ test("a member has one vote, can move it, and books are ordered by votes", () =>
   const { core, adminId, regularId } = adminSession();
   assert.equal(core.openBookClub(adminId).ok, true);
   assert.equal(core.suggestBook({ sessionId: adminId, title: "Dune" }).ok, true);
-  assert.equal(core.suggestBook({ sessionId: regularId, title: "The Hobbit" }).ok, true);
+  assert.equal(core.suggestBook({ sessionId: adminId, title: "The Hobbit" }).ok, true);
 
   const start = suggestions(core, regularId);
   assert.deepEqual(start.map((item) => ({ title: item.title, votes: item.votes, votedByMe: item.votedByMe })), [
@@ -212,8 +216,8 @@ function suggestions(core: ReturnType<typeof openCore>, sessionId: string) {
 test("a cover is stored when found, and a missing cover stays text", async () => {
   const { core, adminId, regularId } = adminSession();
   assert.equal(core.openBookClub(adminId).ok, true);
-  assert.equal(core.suggestBook({ sessionId: regularId, title: "Dune" }).ok, true);
-  assert.equal(core.suggestBook({ sessionId: regularId, title: "Not A Real Book Zzq" }).ok, true);
+  assert.equal(core.suggestBook({ sessionId: adminId, title: "Dune" }).ok, true);
+  assert.equal(core.suggestBook({ sessionId: adminId, title: "Not A Real Book Zzq" }).ok, true);
   let lookups = 0;
   await core.ensureBookCovers(regularId, async (title) => {
     lookups += 1;
@@ -245,7 +249,7 @@ test("closing the call selects the book with the most votes", () => {
   assert.deepEqual(core.closeBookClub({ sessionId: regularId }), { ok: false, failure: { code: "not_an_admin" } });
   assert.deepEqual(core.closeBookClub({ sessionId: adminId }), { ok: false, failure: { code: "suggestions_closed" } });
   assert.equal(core.openBookClub(adminId).ok, true);
-  assert.equal(core.suggestBook({ sessionId: regularId, title: "Dune" }).ok, true);
+  assert.equal(core.suggestBook({ sessionId: adminId, title: "Dune" }).ok, true);
   assert.equal(core.suggestBook({ sessionId: adminId, title: "The Hobbit" }).ok, true);
   const tied = suggestions(core, adminId);
   const dune = tied.find((item) => item.title === "Dune");
@@ -269,7 +273,7 @@ test("closing the call selects the book with the most votes", () => {
   assert.equal(rounds.value[0]?.selectedSuggestionId, hobbit.id);
   assert.deepEqual(core.suggestBook({ sessionId: regularId, title: "Kindred" }), {
     ok: false,
-    failure: { code: "suggestions_closed" },
+    failure: { code: "not_an_admin" },
   });
   assert.deepEqual(core.voteForBook({ sessionId: regularId, suggestionId: dune.id }), {
     ok: false,
@@ -292,7 +296,7 @@ test("a tie waits for the admin to choose, and closing an empty call selects not
   }
   assert.equal(empty.value.selectedSuggestionId, null);
   assert.equal(core.openBookClub(adminId).ok, true);
-  assert.equal(core.suggestBook({ sessionId: regularId, title: "Dune" }).ok, true);
+  assert.equal(core.suggestBook({ sessionId: adminId, title: "Dune" }).ok, true);
   assert.equal(core.suggestBook({ sessionId: adminId, title: "The Hobbit" }).ok, true);
   const rows = suggestions(core, adminId);
   const dune = rows.find((item) => item.title === "Dune");
@@ -324,7 +328,7 @@ test("an admin starts over after a book is selected and the same club opens empt
   assert.deepEqual(core.startOver(adminId), { ok: false, failure: { code: "book_not_selected" } });
   assert.equal(core.openBookClub(adminId).ok, true);
   assert.deepEqual(core.startOver(adminId), { ok: false, failure: { code: "book_not_selected" } });
-  assert.equal(core.suggestBook({ sessionId: regularId, title: "Dune" }).ok, true);
+  assert.equal(core.suggestBook({ sessionId: adminId, title: "Dune" }).ok, true);
   assert.equal(core.suggestBook({ sessionId: adminId, title: "The Hobbit" }).ok, true);
   const before = suggestions(core, adminId);
   const hobbit = before.find((item) => item.title === "The Hobbit");
@@ -353,7 +357,7 @@ test("an admin starts over after a book is selected and the same club opens empt
   assert.equal(rounds.value[0]?.status, "open_for_suggestions");
   assert.equal(rounds.value[0]?.selectedSuggestionId, null);
   assert.deepEqual(rounds.value[0]?.suggestions, []);
-  assert.equal(core.suggestBook({ sessionId: regularId, title: "The Hobbit" }).ok, true);
+  assert.equal(core.suggestBook({ sessionId: adminId, title: "The Hobbit" }).ok, true);
   const again = suggestions(core, regularId);
   assert.equal(again.length, 1);
   assert.equal(again[0]?.title, "The Hobbit");
@@ -368,7 +372,11 @@ test("several matching books wait for a choice, and one match is saved immediate
     { title: "Born to Run", authors: "Bruce Springsteen", year: 1975, coverId: 1 },
     { title: "Born to Run", authors: "Christopher McDougall", year: 2009, coverId: 2 },
   ];
-  const pending = await core.suggestMatchedBook({ sessionId: regularId, title: "Born to Run" }, async () => several);
+  assert.deepEqual(
+    await core.suggestMatchedBook({ sessionId: regularId, title: "Born to Run" }, async () => several),
+    { ok: false, failure: { code: "not_an_admin" } },
+  );
+  const pending = await core.suggestMatchedBook({ sessionId: adminId, title: "Born to Run" }, async () => several);
   assert.equal(pending.ok, true);
   if (!pending.ok) {
     return;
@@ -376,18 +384,18 @@ test("several matching books wait for a choice, and one match is saved immediate
   assert.deepEqual(pending.value.matches, several);
   assert.deepEqual(suggestions(core, regularId), []);
   assert.deepEqual(
-    await core.suggestMatchedBook({ sessionId: regularId, title: "Born to Run", coverId: 9 }, async () => several),
+    await core.suggestMatchedBook({ sessionId: adminId, title: "Born to Run", coverId: 9 }, async () => several),
     { ok: false, failure: { code: "match_not_offered" } },
   );
   assert.equal(suggestions(core, regularId).length, 0);
   const chosen = await core.suggestMatchedBook(
-    { sessionId: regularId, title: "  Born   to Run " },
+    { sessionId: adminId, title: "  Born   to Run " },
     async () => several,
   );
   assert.equal(chosen.ok, true);
   if (chosen.ok && chosen.value.matches) {
     const picked = await core.suggestMatchedBook(
-      { sessionId: regularId, title: "Born to Run", coverId: 2 },
+      { sessionId: adminId, title: "Born to Run", coverId: 2 },
       async () => several,
     );
     assert.equal(picked.ok, true);
@@ -398,7 +406,7 @@ test("several matching books wait for a choice, and one match is saved immediate
   assert.equal(rows[0]?.coverId, 2);
 
   const only = await core.suggestMatchedBook(
-    { sessionId: regularId, title: "Dune" },
+    { sessionId: adminId, title: "Dune" },
     async () => [{ title: "Dune", authors: "Frank Herbert", year: 1965, coverId: 5 }],
   );
   assert.equal(only.ok, true);
@@ -411,14 +419,14 @@ test("several matching books wait for a choice, and one match is saved immediate
   assert.equal(suggestions(core, adminId).find((item) => item.title === "Not A Real Book Zzq")?.coverId, null);
 
   assert.deepEqual(
-    await core.suggestMatchedBook({ sessionId: regularId, title: "Kindred" }, async () => {
+    await core.suggestMatchedBook({ sessionId: adminId, title: "Kindred" }, async () => {
       throw new Error("offline");
     }),
     { ok: false, failure: { code: "book_search_failed" } },
   );
   assert.equal(suggestions(core, regularId).some((item) => item.title === "Kindred"), false);
   assert.deepEqual(
-    await core.suggestMatchedBook({ sessionId: regularId, title: "Born to Run", coverId: 1 }, async () => several),
+    await core.suggestMatchedBook({ sessionId: adminId, title: "Born to Run", coverId: 1 }, async () => several),
     { ok: false, failure: { code: "already_suggested" } },
   );
 });
@@ -430,7 +438,7 @@ test("members can vote for every meeting time, and a tie waits for the admin", (
     failure: { code: "book_not_selected" },
   });
   assert.equal(core.openBookClub(adminId).ok, true);
-  assert.equal(core.suggestBook({ sessionId: regularId, title: "The Hobbit" }).ok, true);
+  assert.equal(core.suggestBook({ sessionId: adminId, title: "The Hobbit" }).ok, true);
   assert.equal(core.closeBookClub({ sessionId: adminId }).ok, true);
   assert.deepEqual(core.proposeMeetingTime({ sessionId: regularId, startsAt: "2026-10-13T19:00" }), {
     ok: false,

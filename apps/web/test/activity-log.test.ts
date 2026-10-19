@@ -61,7 +61,7 @@ test("successful club actions are recorded and refusals are not", async () => {
   await app.handle({
     method: "POST",
     path: "/book-club/suggestions",
-    headers: { cookie: ada },
+    headers: { cookie: bow },
     body: "title=Foundation",
   });
   const club = await app.handle({ method: "GET", path: "/book-club", headers: { cookie: ada } });
@@ -86,7 +86,7 @@ test("successful club actions are recorded and refusals are not", async () => {
   assert.match(text, /Ada signed in/);
   assert.match(text, /bow signed in/);
   assert.match(text, /bow opened the club for book suggestions/);
-  assert.match(text, /Ada suggested "Foundation"/);
+  assert.match(text, /bow suggested "Foundation"/);
   assert.match(text, /Ada voted for "Foundation"/);
   assert.equal(text.includes("moved their vote"), false);
   assert.equal(text.includes("secret-phrase"), false);

@@ -249,7 +249,6 @@ export function page(options: {
     .winner .book-stack .cover { width: 100%; }
     .books { list-style: none; margin: 0; padding: 0.6rem 0 1rem; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2.4rem 1.5rem; align-items: start; }
     .books li { position: relative; z-index: 0; display: flex; justify-content: center; min-width: 0; max-width: 100%; font-size: 1.05rem; font-weight: 600; line-height: 1.3; }
-    .books li:has(.cover:hover) { z-index: 2; }
     .book-stack {
       display: flex;
       flex-direction: column;
@@ -275,25 +274,16 @@ export function page(options: {
       min-width: 0;
     }
     .book-actions .choose { order: 1; flex: 1 0 100%; display: flex; justify-content: center; min-width: 0; }
-    .cover-float:hover { animation: none; }
     .cover {
       width: min(100%, 8.5rem);
       aspect-ratio: 2 / 3;
       object-fit: cover;
       border-radius: 0.4rem;
       background: var(--surface);
-      transform-origin: center center;
       box-shadow: 0 12px 24px rgba(26, 22, 18, 0.16);
     }
     .books li:nth-child(2n) .cover-float { animation-duration: 6.4s; animation-delay: -1.6s; }
     .books li:nth-child(3n) .cover-float { animation-duration: 4.6s; animation-delay: -2.4s; }
-    .books li:has(.cover:hover) .cover-float { animation: none; }
-    .cover:hover {
-      position: relative;
-      z-index: 1;
-      transform: scale(1.85);
-      box-shadow: 0 18px 40px rgba(26, 22, 18, 0.28);
-    }
     @keyframes float-book {
       from { transform: translateY(6px) rotate(-1.4deg); }
       to { transform: translateY(-14px) rotate(1.4deg); }
@@ -303,12 +293,6 @@ export function page(options: {
     }
     @media (hover: none), (pointer: coarse) {
       .cover-float { animation: none; }
-      .cover:hover {
-        position: static;
-        z-index: auto;
-        transform: none;
-        box-shadow: 0 12px 24px rgba(26, 22, 18, 0.16);
-      }
     }
     .votes { margin: 0; font-size: 0.92rem; font-weight: 500; color: #4d5d73; }
     .your-vote {
@@ -339,7 +323,6 @@ export function page(options: {
     }
     .matches form { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; margin: 0; text-align: center; }
     .matches .cover { width: 8.5rem; }
-    .matches .cover:hover { transform: none; }
     .matches p { margin: 0; color: var(--ink); font-size: 0.92rem; font-weight: 500; }
     .matches button { margin-top: 0.35rem; padding: 0.45rem 0.8rem; font-size: 0.85rem; }
     .meeting-note, .meeting-chosen { color: var(--ink); }

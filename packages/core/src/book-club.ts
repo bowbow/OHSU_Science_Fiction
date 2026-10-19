@@ -158,6 +158,9 @@ export function suggestBook(
   if (!member) {
     return actionFailure({ code: "not_signed_in" });
   }
+  if (member.role !== "admin") {
+    return actionFailure({ code: "not_an_admin" });
+  }
   const title = cleanTitle(input.title);
   if (!title) {
     return actionFailure({ code: "title_empty" });
@@ -191,6 +194,9 @@ export async function suggestMatchedBook(
   const member = currentMember(db, input.sessionId);
   if (!member) {
     return actionFailure({ code: "not_signed_in" });
+  }
+  if (member.role !== "admin") {
+    return actionFailure({ code: "not_an_admin" });
   }
   const title = cleanTitle(input.title);
   if (!title) {
@@ -273,6 +279,9 @@ export function removeBookSuggestion(
   if (!member) {
     return actionFailure({ code: "not_signed_in" });
   }
+  if (member.role !== "admin") {
+    return actionFailure({ code: "not_an_admin" });
+  }
   const row = db.prepare(
     `SELECT s.id, s.title, s.suggested_by, m.username AS suggested_by_name, c.status
      FROM book_suggestions s
@@ -285,9 +294,6 @@ export function removeBookSuggestion(
   }
   if (row.status !== "open_for_suggestions") {
     return actionFailure({ code: "suggestions_closed" });
-  }
-  if (member.role !== "admin" && row.suggested_by !== member.id) {
-    return actionFailure({ code: "not_your_suggestion" });
   }
   db.prepare("DELETE FROM book_suggestions WHERE id = ?").run(row.id);
   return { ok: true, value: { title: row.title, suggestedBy: row.suggested_by_name } };

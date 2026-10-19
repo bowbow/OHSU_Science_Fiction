@@ -13,7 +13,7 @@ export function failureSentence(failure: CoreFailure): string {
     case "not_signed_in":
       return "Sign in to see the book club.";
     case "not_an_admin":
-      return "Only an admin can open a book club for suggestions.";
+      return "Only an admin can make that change.";
     case "not_a_regular_member":
       return "Only regular members can suggest a book.";
     case "suggestions_closed":

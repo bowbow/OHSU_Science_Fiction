@@ -22,7 +22,7 @@ async function signIn(app: ReturnType<typeof createApp>, username: string, passw
   return cookie.split(";")[0] ?? "";
 }
 
-test("admins open suggestions and regular members add a remembered title", async () => {
+test("admins add books and regular members can only vote", async () => {
   const app = createApp({ core: coreWithAdmin() });
   const admin = await signIn(app, "bow", "admin");
   const opened = await app.handle({
@@ -53,12 +53,25 @@ test("admins open suggestions and regular members add a remembered title", async
     path: "/book-club/open",
     headers: { cookie: regular },
   });
-  assert.match(refused.body, /Only an admin can open a book club for suggestions/);
+  assert.match(refused.body, /Only an admin can make that change/);
+
+  const regularPage = await app.handle({ method: "GET", path: "/book-club", headers: { cookie: regular } });
+  assert.equal(regularPage.body.includes("Suggest book"), false);
+  assert.equal(regularPage.body.includes('action="/book-club/suggestions"'), false);
+
+  const refusedSuggestion = await app.handle({
+    method: "POST",
+    path: "/book-club/suggestions",
+    headers: { cookie: regular, "content-type": "application/x-www-form-urlencoded" },
+    body: "title=The+Hobbit",
+  });
+  assert.match(refusedSuggestion.body, /Only an admin can make that change/);
+  assert.equal(refusedSuggestion.body.includes("The Hobbit"), false);
 
   const suggested = await app.handle({
     method: "POST",
     path: "/book-club/suggestions",
-    headers: { cookie: regular, "content-type": "application/x-www-form-urlencoded" },
+    headers: { cookie: admin, "content-type": "application/x-www-form-urlencoded" },
     body: "title=The+Hobbit",
   });
   assert.equal(suggested.status, 303);
@@ -68,7 +81,9 @@ test("admins open suggestions and regular members add a remembered title", async
     headers: { cookie: regular },
   });
   assert.match(listed.body, /The Hobbit/);
-  assert.match(listed.body, /title="Suggested by Ada"/);
+  assert.match(listed.body, /title="Suggested by bow"/);
+  assert.match(item(listed.body, "The Hobbit"), />Vote</);
+  assert.equal(item(listed.body, "The Hobbit").includes("Remove"), false);
   assert.equal(listed.body.includes('href="/book-club"'), false);
   assert.match(listed.body, /Sign out/);
 
@@ -77,7 +92,7 @@ test("admins open suggestions and regular members add a remembered title", async
   assert.match(signedOut.body, /Sign in to see the book club/);
 });
 
-test("a member removes only their own book and an admin can remove any book", async () => {
+test("only an admin can remove books", async () => {
   const app = createApp({ core: coreWithAdmin() });
   const admin = await signIn(app, "bow", "admin");
   await app.handle({ method: "POST", path: "/book-club/open", headers: { cookie: admin } });
@@ -97,12 +112,12 @@ test("a member removes only their own book and an admin can remove any book", as
   await app.handle({
     method: "POST",
     path: "/book-club/suggestions",
-    headers: { cookie: regular, "content-type": "application/x-www-form-urlencoded" },
+    headers: { cookie: admin, "content-type": "application/x-www-form-urlencoded" },
     body: "title=The+Hobbit",
   });
 
   const memberPage = await app.handle({ method: "GET", path: "/book-club", headers: { cookie: regular } });
-  assert.match(item(memberPage.body, "The Hobbit"), /Remove/);
+  assert.equal(item(memberPage.body, "The Hobbit").includes("Remove"), false);
   assert.equal(item(memberPage.body, "Dune").includes("Remove"), false);
 
   const adminPage = await app.handle({ method: "GET", path: "/book-club", headers: { cookie: admin } });
@@ -117,19 +132,16 @@ test("a member removes only their own book and an admin can remove any book", as
     headers: { cookie: regular, "content-type": "application/x-www-form-urlencoded" },
     body: `suggestion=${encodeURIComponent(duneId)}`,
   });
-  assert.match(refused.body, /You can only remove a book you suggested/);
+  assert.match(refused.body, /Only an admin can make that change/);
   assert.match(refused.body, /Dune/);
 
-  const removed = await app.handle({
+  const removedHobbit = await app.handle({
     method: "POST",
     path: "/book-club/suggestions/remove",
-    headers: { cookie: regular, "content-type": "application/x-www-form-urlencoded" },
+    headers: { cookie: admin, "content-type": "application/x-www-form-urlencoded" },
     body: `suggestion=${encodeURIComponent(hobbitId)}`,
   });
-  assert.equal(removed.status, 303);
-  const afterMember = await app.handle({ method: "GET", path: "/book-club", headers: { cookie: regular } });
-  assert.equal(afterMember.body.includes("The Hobbit"), false);
-  assert.match(afterMember.body, /Dune/);
+  assert.equal(removedHobbit.status, 303);
 
   const removedByAdmin = await app.handle({
     method: "POST",
@@ -140,6 +152,7 @@ test("a member removes only their own book and an admin can remove any book", as
   assert.equal(removedByAdmin.status, 303);
   const afterAdmin = await app.handle({ method: "GET", path: "/book-club", headers: { cookie: admin } });
   assert.equal(afterAdmin.body.includes("Dune"), false);
+  assert.equal(afterAdmin.body.includes("The Hobbit"), false);
   assert.match(afterAdmin.body, /No books have been suggested yet/);
 });
 
@@ -209,7 +222,7 @@ test("members cast one vote, can move it, and the most votes are listed first", 
   await app.handle({
     method: "POST",
     path: "/book-club/suggestions",
-    headers: { cookie: regular, "content-type": "application/x-www-form-urlencoded" },
+    headers: { cookie: admin, "content-type": "application/x-www-form-urlencoded" },
     body: "title=The+Hobbit",
   });
 
@@ -279,7 +292,7 @@ test("an admin closes the call and a regular member sees the winning book alone"
   await app.handle({
     method: "POST",
     path: "/book-club/suggestions",
-    headers: { cookie: regular, "content-type": "application/x-www-form-urlencoded" },
+    headers: { cookie: admin, "content-type": "application/x-www-form-urlencoded" },
     body: "title=The+Hobbit",
   });
   const hobbitId = suggestionId(
@@ -293,7 +306,7 @@ test("an admin closes the call and a regular member sees the winning book alone"
     body: `suggestion=${encodeURIComponent(hobbitId)}`,
   });
   const refused = await app.handle({ method: "POST", path: "/book-club/close", headers: { cookie: regular } });
-  assert.match(refused.body, /Only an admin can open a book club for suggestions/);
+  assert.match(refused.body, /Only an admin can make that change/);
   const closed = await app.handle({ method: "POST", path: "/book-club/close", headers: { cookie: admin } });
   assert.equal(closed.status, 303);
   const winner = await app.handle({ method: "GET", path: "/book-club", headers: { cookie: regular } });
@@ -376,15 +389,15 @@ test("an admin starts over and the club opens for suggestions with an empty list
   const hidden = await app.handle({ method: "GET", path: "/book-club", headers: { cookie: regular } });
   assert.equal(hidden.body.includes("Start a new book"), false);
   const refused = await app.handle({ method: "POST", path: "/book-club/start-over", headers: { cookie: regular } });
-  assert.match(refused.body, /Only an admin can open a book club for suggestions/);
+  assert.match(refused.body, /Only an admin can make that change/);
   const restarted = await app.handle({ method: "POST", path: "/book-club/start-over", headers: { cookie: admin } });
   assert.equal(restarted.status, 303);
   const fresh = await app.handle({ method: "GET", path: "/book-club", headers: { cookie: regular } });
-  assert.match(fresh.body, /Book club is open for book suggestions/);
+  assert.match(fresh.body, /Book club voting is open/);
   assert.match(fresh.body, /No books have been suggested yet/);
   assert.equal(fresh.body.includes("The Hobbit"), false);
   assert.equal(fresh.body.includes("The book club will read"), false);
-  assert.match(fresh.body, /Suggest book/);
+  assert.equal(fresh.body.includes("Suggest book"), false);
 });
 
 test("several matching books ask which one to add", async () => {
@@ -478,7 +491,7 @@ test("members vote for meeting times and a regular member sees the chosen date",
     headers: { cookie: regular, "content-type": "application/x-www-form-urlencoded" },
     body: "starts=2026-10-13T19%3A00",
   });
-  assert.match(early.body, /Only an admin can open a book club for suggestions/);
+  assert.match(early.body, /Only an admin can make that change/);
   await app.handle({
     method: "POST",
     path: "/book-club/meeting",

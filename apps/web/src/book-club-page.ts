@@ -32,7 +32,9 @@ export function renderBookClubPage(options: {
   const heading = selected
     ? `The book club will read ${selected.title}.`
     : open
-      ? "Book club is open for book suggestions."
+      ? options.member.role === "admin"
+        ? "Book club is open for book suggestions."
+        : "Book club voting is open."
       : club
         ? "No book was selected."
         : "Book club is not open for book suggestions.";
@@ -48,7 +50,7 @@ export function renderBookClubPage(options: {
     ? `<form method="post" action="/book-club/close"><button type="submit">Close the call for new books</button></form>`
     : "";
   const startOverAction = selected && options.member.role === "admin" ? startOverConfirm() : "";
-  const suggestAction = open
+  const suggestAction = open && options.member.role === "admin"
     ? `<form class="sheet" method="post" action="/book-club/suggestions">
          <label>Book title <input name="title" required></label>
          <button type="submit">Suggest book</button>
@@ -334,8 +336,7 @@ function suggestionList(
     return "<p>No books have been suggested yet.</p>";
   }
   const items = round.suggestions.map((suggestion) => {
-    const removable = member.role === "admin" || suggestion.suggestedBy === member.username;
-    const remove = showActions && removable
+    const remove = showActions && member.role === "admin"
       ? `<form method="post" action="/book-club/suggestions/remove"><input type="hidden" name="suggestion" value="${escapeHtml(suggestion.id)}"><button class="quiet" type="submit">Remove</button></form>`
       : "";
     const vote = !showActions
