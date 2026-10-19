@@ -196,6 +196,7 @@ test("a found cover is shown and a missing cover stays text", async () => {
   });
   const page = await app.handle({ method: "GET", path: "/book-club", headers: { cookie: admin } });
   assert.match(item(page.body, "Dune"), /src="https:\/\/covers\.openlibrary\.org\/b\/id\/42-M\.jpg"/);
+  assert.match(item(page.body, "Dune"), /<div class="book-float-group cover-float"><div class="book-stack">/);
   assert.match(item(page.body, "Dune"), /class="book-title" hidden/);
   const plain = item(page.body, "Not A Real Book Zzq");
   assert.equal(plain.includes("<img"), false);
@@ -259,6 +260,34 @@ test("members cast one vote, can move it, and the most votes are listed first", 
   });
   const afterMove = await app.handle({ method: "GET", path: "/book-club", headers: { cookie: regular } });
   assert.match(afterMove.body, /<li class="book"[^>]*>[\s\S]*?2 votes[\s\S]*?Dune[\s\S]*?Your vote[\s\S]*?<li class="book"[^>]*>[\s\S]*?0 votes[\s\S]*?The Hobbit/);
+  assert.equal(afterMove.body.includes("View voters"), false);
+  assert.equal(afterMove.body.includes('class="voter-list"'), false);
+
+  const adminView = await app.handle({ method: "GET", path: "/book-club", headers: { cookie: admin } });
+  const adminDune = item(adminView.body, "Dune");
+  assert.match(adminDune, /<div class="book-float-group"><div class="book-stack">/);
+  assert.match(adminDune, /<details class="voter-disclosure">/);
+  assert.match(adminDune, /<\/div><details class="voter-disclosure">/);
+  assert.match(adminDune, /<summary>View voters<\/summary>/);
+  assert.match(adminDune, /class="voter-name" role="listitem">Ada<\/span>/);
+  assert.match(adminDune, /class="voter-name" role="listitem">bow<\/span>/);
+  assert.equal(item(adminView.body, "The Hobbit").includes("View voters"), false);
+
+  for (const cookie of [regular, admin]) {
+    const movedToHobbit = await app.handle({
+      method: "POST",
+      path: "/book-club/votes",
+      headers: { cookie, "content-type": "application/x-www-form-urlencoded" },
+      body: `suggestion=${encodeURIComponent(hobbitId)}`,
+    });
+    assert.equal(movedToHobbit.status, 303);
+  }
+  const movedAdminView = await app.handle({ method: "GET", path: "/book-club", headers: { cookie: admin } });
+  assert.equal(item(movedAdminView.body, "Dune").includes("View voters"), false);
+  const adminHobbit = item(movedAdminView.body, "The Hobbit");
+  assert.match(adminHobbit, /<details class="voter-disclosure">/);
+  assert.match(adminHobbit, /class="voter-name" role="listitem">Ada<\/span>/);
+  assert.match(adminHobbit, /class="voter-name" role="listitem">bow<\/span>/);
 
   const signedOut = await app.handle({
     method: "POST",

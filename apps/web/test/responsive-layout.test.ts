@@ -86,7 +86,14 @@ test("the sci-fi variant uses a local targeting cursor", () => {
 test("the sci-fi books use a local electronic card image", () => {
   const cardUrl = new URL("../public/book-card.svg", import.meta.url);
   assert.match(source, /\.book-stack,[\s\S]*?background:\s*url\("\/assets\/book-card\.svg\?v=3"\) center center \/ 100% 100% no-repeat/s);
-  assert.match(source, /\.book-stack > \.votes\s*\{[^}]*position:\s*absolute/s);
+  assert.match(source, /\.book-stack > \.votes\s*\{[^}]*position:\s*relative;[^}]*align-self:\s*flex-start;[^}]*flex:\s*0 0 auto;/s);
+  assert.match(source, /\.book-stack > \.votes\s*\{[^}]*background:\s*linear-gradient[^}]*font-size:\s*0\.66rem;/s);
+  assert.match(source, /html\[data-variant="scifi"\] \.book-stack,[\s\S]*?height:\s*27rem;[\s\S]*?min-height:\s*27rem;[\s\S]*?padding:\s*1\.5rem 1\.65rem 2rem;/s);
+  assert.match(source, /\.book-stack \.cover,[\s\S]*?\.book-stack \.book-actions\s*\{[^}]*flex:\s*0 0 auto;/s);
+  assert.match(source, /\.book-stack \.book-actions\s*\{[^}]*margin-top:\s*auto;/s);
+  assert.match(source, /\.book-float-group\s*\{[^}]*display:\s*flex;[^}]*flex-direction:\s*column;/s);
+  assert.match(source, /\.book-float-group > \.voter-disclosure\s*\{[^}]*width:\s*min\(calc\(100% - 2\.8rem\), 11rem\);[^}]*margin-top:\s*-2\.6rem;/s);
+  assert.match(source, /\.book-float-group > \.voter-disclosure summary\s*\{[^}]*display:\s*block;[^}]*clip-path:\s*polygon/s);
   assert.equal(existsSync(cardUrl), true);
   assert.ok(statSync(cardUrl).size < 12_000);
   assert.match(serverSource, /pathname === "\/assets\/book-card\.svg"/);

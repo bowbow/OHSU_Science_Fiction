@@ -248,7 +248,8 @@ export function page(options: {
     }
     .winner .book-stack .cover { width: 100%; }
     .books { list-style: none; margin: 0; padding: 0.6rem 0 1rem; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2.4rem 1.5rem; align-items: start; }
-    .books li { position: relative; z-index: 0; display: flex; justify-content: center; min-width: 0; max-width: 100%; font-size: 1.05rem; font-weight: 600; line-height: 1.3; }
+    .books li { position: relative; z-index: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-width: 0; max-width: 100%; font-size: 1.05rem; font-weight: 600; line-height: 1.3; }
+    .book-float-group { display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 100%; min-width: 0; }
     .book-stack {
       display: flex;
       flex-direction: column;
@@ -311,6 +312,35 @@ export function page(options: {
     .books .book-actions button,
     .books .book-actions .your-vote { max-width: 100%; white-space: normal; line-height: 1.2; }
     .books .book-actions .your-vote { margin-left: 0; }
+    .voter-disclosure {
+      width: 100%;
+      max-width: 14rem;
+      margin-top: 0.45rem;
+      color: #4d5d73;
+      font-size: 0.78rem;
+      font-weight: 500;
+      text-align: left;
+    }
+    .voter-disclosure summary {
+      width: fit-content;
+      margin: 0 auto;
+      color: var(--accent);
+      cursor: pointer;
+      font-weight: 700;
+    }
+    .voter-disclosure summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+    .voter-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      margin-top: 0.5rem;
+      padding: 0.55rem 0.65rem;
+      border: 1px solid rgba(36, 78, 139, 0.22);
+      border-radius: 0.55rem;
+      background: rgba(36, 78, 139, 0.07);
+      overflow-wrap: anywhere;
+    }
+    .voter-name::before { content: "•"; margin-right: 0.45rem; color: var(--accent); }
     .match-note { color: white; text-shadow: 0 1px 1px rgba(28, 63, 114, 0.25); }
     .match-note a { color: white; }
     .matches { list-style: none; display: flex; flex-wrap: wrap; gap: 1.5rem; margin: 0.4rem 0 0; padding: 0; }
@@ -903,8 +933,9 @@ export function page(options: {
     html[data-variant="scifi"] .winner .book-stack {
       position: relative;
       width: min(100%, 14rem);
-      min-height: 23rem;
-      padding: 3.4rem 1.65rem 2rem;
+      height: 27rem;
+      min-height: 27rem;
+      padding: 1.5rem 1.65rem 2rem;
       gap: 0.7rem;
       color: var(--hud-text);
       background: url("/assets/book-card.svg?v=3") center center / 100% 100% no-repeat;
@@ -916,27 +947,39 @@ export function page(options: {
         drop-shadow(0 0 12px rgba(87, 222, 211, 0.2));
     }
     html[data-variant="scifi"] .book-stack:not(:has(.cover)) {
+      height: auto;
       min-height: 17rem;
       justify-content: center;
       padding-top: 4.2rem;
     }
     html[data-variant="scifi"] .book-stack > .votes {
-      position: absolute;
-      top: 1.65rem;
-      left: 1.9rem;
+      position: relative;
+      z-index: 2;
+      align-self: flex-start;
+      flex: 0 0 auto;
       max-width: 7.5rem;
+      margin: 0 0 0.65rem 0.25rem;
+      padding: 0.22rem 0.7rem;
       overflow: hidden;
-      color: #031014;
+      color: #021012;
+      border: 1px solid rgba(167, 255, 248, 0.88);
+      background: linear-gradient(90deg, rgba(125, 255, 243, 0.96), rgba(43, 145, 182, 0.92));
+      box-shadow: 0 0 10px rgba(87, 222, 211, 0.36), inset 0 0 8px rgba(255, 255, 255, 0.16);
+      clip-path: polygon(0 0, calc(100% - 0.55rem) 0, 100% 50%, calc(100% - 0.55rem) 100%, 0 100%, 0.35rem 50%);
       font-family: "Orbitron", sans-serif;
-      font-size: 0.62rem;
+      font-size: 0.66rem;
       font-weight: 700;
+      line-height: 1.2;
       letter-spacing: 0.08em;
       text-overflow: ellipsis;
       text-transform: uppercase;
       white-space: nowrap;
     }
     html[data-variant="scifi"] .book-stack .book-title { color: #d9f7f4; }
+    html[data-variant="scifi"] .book-stack .cover,
+    html[data-variant="scifi"] .book-stack .book-actions { flex: 0 0 auto; }
     html[data-variant="scifi"] .book-stack .book-actions {
+      margin-top: auto;
       padding: 0.25rem 0.2rem 0.35rem;
       border-top: 1px solid rgba(87, 222, 211, 0.22);
     }
@@ -949,6 +992,53 @@ export function page(options: {
       letter-spacing: 0.06em;
       text-transform: uppercase;
     }
+    html[data-variant="scifi"] .book-float-group > .voter-disclosure {
+      position: relative;
+      z-index: 3;
+      width: min(calc(100% - 2.8rem), 11rem);
+      max-width: 11rem;
+      margin-top: -2.6rem;
+      padding: 0;
+      color: var(--hud-muted);
+      text-align: center;
+    }
+    html[data-variant="scifi"] .book-float-group > .voter-disclosure summary {
+      display: block;
+      width: 100%;
+      padding: 0.38rem 0.7rem;
+      border: 1px solid rgba(87, 222, 211, 0.62);
+      color: var(--hud-teal);
+      background:
+        linear-gradient(90deg, rgba(87, 222, 211, 0.17), rgba(3, 19, 25, 0.96) 32%, rgba(3, 19, 25, 0.96) 68%, rgba(87, 222, 211, 0.17));
+      box-shadow: 0 0 12px rgba(87, 222, 211, 0.2), inset 0 0 12px rgba(87, 222, 211, 0.06);
+      clip-path: polygon(0.65rem 0, calc(100% - 0.65rem) 0, 100% 50%, calc(100% - 0.65rem) 100%, 0.65rem 100%, 0 50%);
+      list-style: none;
+      font-family: "Orbitron", sans-serif;
+      font-size: 0.62rem;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      text-shadow: 0 0 8px rgba(87, 222, 211, 0.45);
+    }
+    html[data-variant="scifi"] .book-float-group > .voter-disclosure summary::-webkit-details-marker { display: none; }
+    html[data-variant="scifi"] .book-float-group > .voter-disclosure summary::before {
+      content: "▸";
+      display: inline-block;
+      margin-right: 0.45rem;
+      color: #ff5b8d;
+    }
+    html[data-variant="scifi"] .book-float-group > .voter-disclosure[open] summary::before { content: "▾"; }
+    html[data-variant="scifi"] .book-float-group > .voter-disclosure summary:focus-visible { outline-color: var(--hud-teal); }
+    html[data-variant="scifi"] .book-float-group > .voter-disclosure .voter-list {
+      margin-top: 0.35rem;
+      border-color: rgba(87, 222, 211, 0.38);
+      border-radius: 0;
+      color: var(--hud-text);
+      background:
+        linear-gradient(90deg, rgba(87, 222, 211, 0.1), transparent 62%),
+        rgba(2, 10, 12, 0.82);
+      box-shadow: inset 0 0 14px rgba(87, 222, 211, 0.05), 0 0 10px rgba(87, 222, 211, 0.08);
+    }
+    html[data-variant="scifi"] .book-float-group > .voter-disclosure .voter-name::before { color: var(--hud-teal); }
     html[data-variant="scifi"] input {
       color: #ffffff;
       border: 1px solid rgba(87, 222, 211, 0.4);

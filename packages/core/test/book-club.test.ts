@@ -193,7 +193,11 @@ test("a member has one vote, can move it, and books are ordered by votes", () =>
     { title: "Dune", votes: 2, votedByMe: true },
     { title: "The Hobbit", votes: 0, votedByMe: false },
   ]);
-  assert.equal(suggestions(core, adminId).find((item) => item.title === "Dune")?.votedByMe, true);
+  assert.equal("voters" in (suggestions(core, regularId).find((item) => item.title === "Dune") ?? {}), false);
+  const adminDune = suggestions(core, adminId).find((item) => item.title === "Dune");
+  assert.equal(adminDune?.votedByMe, true);
+  assert.deepEqual(adminDune?.voters, ["Ada", "bow"]);
+  assert.deepEqual(suggestions(core, adminId).find((item) => item.title === "The Hobbit")?.voters, []);
 
   assert.equal(core.removeBookSuggestion({ sessionId: adminId, suggestionId: dune.id }).ok, true);
   const afterRemoval = suggestions(core, regularId);

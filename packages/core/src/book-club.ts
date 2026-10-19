@@ -11,6 +11,7 @@ export type BookSuggestionView = {
   votes: number;
   votedByMe: boolean;
   coverId: number | null;
+  voters?: string[];
 };
 
 export type MeetingTimeView = {
@@ -86,33 +87,60 @@ export function bookClubRounds(db: DatabaseSync, sessionId: string | null | unde
      GROUP BY t.id
      ORDER BY votes DESC, t.proposed_at ASC, t.rowid ASC`,
   );
+  const suggestionVoters = member.role === "admin"
+    ? db.prepare(
+      `SELECT v.suggestion_id, m.username
+       FROM book_votes v
+       JOIN members m ON m.id = v.member_id
+       JOIN book_suggestions s ON s.id = v.suggestion_id
+       WHERE s.book_club_id = ?
+       ORDER BY m.username COLLATE NOCASE, v.voted_at ASC`,
+    )
+    : null;
   return {
     ok: true,
-    value: rounds.map((round) => ({
-      id: round.id,
-      status: round.status,
-      selectedSuggestionId: round.selected_suggestion_id,
-      selectedMeetingTimeId: round.selected_meeting_time_id,
-      meetingTimes: (meetingTimes.all(member.id, round.id) as {
-        id: string;
-        starts_at: string;
-        votes: number;
-        voted_by_me: number | null;
-      }[]).map((row) => ({
-        id: row.id,
-        startsAt: row.starts_at,
-        votes: row.votes,
-        votedByMe: row.voted_by_me === 1,
-      })),
-      suggestions: (suggestions.all(member.id, round.id) as SuggestionRow[]).map((row) => ({
-        id: row.id,
-        title: row.title,
-        suggestedBy: row.username,
-        votes: row.votes,
-        votedByMe: row.voted_by_me === 1,
-        coverId: row.cover_id,
-      })),
-    })),
+    value: rounds.map((round) => {
+      const votersBySuggestion = new Map<string, string[]>();
+      if (suggestionVoters) {
+        const voterRows = suggestionVoters.all(round.id) as { suggestion_id: string; username: string }[];
+        for (const row of voterRows) {
+          const voters = votersBySuggestion.get(row.suggestion_id) ?? [];
+          voters.push(row.username);
+          votersBySuggestion.set(row.suggestion_id, voters);
+        }
+      }
+      return {
+        id: round.id,
+        status: round.status,
+        selectedSuggestionId: round.selected_suggestion_id,
+        selectedMeetingTimeId: round.selected_meeting_time_id,
+        meetingTimes: (meetingTimes.all(member.id, round.id) as {
+          id: string;
+          starts_at: string;
+          votes: number;
+          voted_by_me: number | null;
+        }[]).map((row) => ({
+          id: row.id,
+          startsAt: row.starts_at,
+          votes: row.votes,
+          votedByMe: row.voted_by_me === 1,
+        })),
+        suggestions: (suggestions.all(member.id, round.id) as SuggestionRow[]).map((row) => {
+          const suggestion: BookSuggestionView = {
+            id: row.id,
+            title: row.title,
+            suggestedBy: row.username,
+            votes: row.votes,
+            votedByMe: row.voted_by_me === 1,
+            coverId: row.cover_id,
+          };
+          if (member.role === "admin") {
+            suggestion.voters = votersBySuggestion.get(row.id) ?? [];
+          }
+          return suggestion;
+        }),
+      };
+    }),
   };
 }
 

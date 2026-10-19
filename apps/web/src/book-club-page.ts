@@ -469,12 +469,20 @@ function suggestionList(
     const title = escapeHtml(suggestion.title);
     const votes = `<span class="votes">${voteCount(suggestion.votes)}</span>`;
     const actions = vote || remove || choose ? `<span class="book-actions">${vote}${choose}${remove}</span>` : "";
+    const voters = member.role === "admin" && suggestion.voters && suggestion.voters.length > 0
+      ? `<details class="voter-disclosure">
+           <summary>View voters</summary>
+           <div class="voter-list" role="list" aria-label="Voters for ${title}">
+             ${suggestion.voters.map((voter) => `<span class="voter-name" role="listitem">${escapeHtml(voter)}</span>`).join("")}
+           </div>
+         </details>`
+      : "";
     const suggestedBy = escapeHtml(suggestion.suggestedBy);
     if (suggestion.coverId === null) {
-      return `<li class="book" title="Suggested by ${suggestedBy}"><div class="book-stack">${votes}<span class="book-title">${title}</span>${actions}</div></li>`;
+      return `<li class="book" title="Suggested by ${suggestedBy}"><div class="book-float-group"><div class="book-stack">${votes}<span class="book-title">${title}</span>${actions}</div>${voters}</div></li>`;
     }
     const cover = `<img class="cover" alt="${title}" src="https://covers.openlibrary.org/b/id/${suggestion.coverId}-M.jpg" onerror="var card=this.closest('li');var name=card.querySelector('.book-title');if(name)name.hidden=false;var drift=this.closest('.cover-float');if(drift)drift.classList.remove('cover-float');this.remove()">`;
-    return `<li class="book" title="Suggested by ${suggestedBy}"><div class="book-stack cover-float">${votes}${cover}<span class="book-title" hidden>${title}</span>${actions}</div></li>`;
+    return `<li class="book" title="Suggested by ${suggestedBy}"><div class="book-float-group cover-float"><div class="book-stack">${votes}${cover}<span class="book-title" hidden>${title}</span>${actions}</div>${voters}</div></li>`;
   }).join("");
   return `<ul class="books">${items}</ul>`;
 }
