@@ -506,7 +506,16 @@ test("members vote for meeting times and a regular member sees the chosen date",
   });
   const choosing = await app.handle({ method: "GET", path: "/book-club", headers: { cookie: admin } });
   assert.equal(choosing.body.includes("datetime-local"), false);
+  assert.equal(choosing.body.includes('type="time"'), false);
   assert.match(choosing.body, /class="cal-add"/);
+  assert.match(choosing.body, /name="clock" value="16:00"/);
+  assert.match(choosing.body, /class="dial-value active" data-dial-mode="hour"[^>]*>04<\/button>/);
+  assert.match(choosing.body, /class="dial-period active" data-period="PM" aria-pressed="true">PM<\/button>/);
+  assert.match(choosing.body, /class="clock-option active"[^>]*data-hour="4">4<\/button>/);
+  assert.match(choosing.body, /class="dial-options dial-minutes" hidden/);
+  assert.match(choosing.body, /data-minute="55">55<\/button>/);
+  const scripts = [...choosing.body.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((match) => match[1] ?? "");
+  assert.doesNotThrow(() => scripts.forEach((script) => Function(script)));
   assert.match(choosing.body, /Click an open day to propose a time/);
   assert.match(choosing.body, /data-date="2026-10-13"/);
   assert.match(choosing.body, /data-date="2026-10-20"/);
@@ -535,6 +544,11 @@ test("members vote for meeting times and a regular member sees the chosen date",
     headers: { cookie: regular, "content-type": "application/x-www-form-urlencoded" },
     body: `meeting=${encodeURIComponent(first)}`,
   });
+  const leading = await app.handle({ method: "GET", path: "/book-club", headers: { cookie: admin } });
+  assert.match(leading.body, /class="meeting-finalize"/);
+  assert.match(leading.body, /October 13, 2026 at 7:00 PM<\/strong> has the most votes/);
+  assert.match(leading.body, /Press <strong>Date selected<\/strong> to lock in the selected book together with this date and time for the club/);
+  assert.match(leading.body, />Date selected<\/button>/);
   await app.handle({
     method: "POST",
     path: "/book-club/meeting/votes",

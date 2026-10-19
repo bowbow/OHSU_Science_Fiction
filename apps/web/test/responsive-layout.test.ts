@@ -106,3 +106,14 @@ test("the sci-fi controls use layered HUD glows", () => {
     /html\[data-variant="scifi"\] button\s*\{[^}]*drop-shadow\(0 0 5px rgba\(87, 222, 211, 0\.44\)\)[^}]*drop-shadow\(0 0 13px rgba\(83, 167, 255, 0\.2\)\)/s,
   );
 });
+
+test("the sci-fi calendar keeps its date controls legible", () => {
+  assert.match(
+    source,
+    /html\[data-variant="scifi"\] \.calendar button\.cal-add,\s*html\[data-variant="scifi"\] \.calendar button\.cal-hit\s*\{[^}]*clip-path:\s*none[^}]*filter:\s*none/s,
+  );
+  assert.match(
+    source,
+    /html\[data-variant="scifi"\] \.calendar button\.cal-add\s*\{[^}]*color:\s*var\(--hud-text\)[^}]*background:\s*transparent/s,
+  );
+});

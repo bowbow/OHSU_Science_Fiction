@@ -124,8 +124,17 @@ function meetingParts(club: BookClubRoundView, member: MemberView, month?: strin
     return `<li><span class="votes">${voteCount(time.votes)}</span><span class="meeting-when">${escapeHtml(formatMeetingTime(time.startsAt))}</span><span class="meeting-actions">${choose}${remove}</span></li>`;
   }).join("") : "";
   const list = items ? `<ul class="meetings">${items}</ul>` : "";
-  const select = admin && club.meetingTimes.length > 0 && !tied
-    ? `<form method="post" action="/book-club/meeting/select"><button type="submit">Date selected</button></form>`
+  const leader = !tied ? leaders[0] ?? null : null;
+  const leadSentence = leader
+    ? leader.votes > 0
+      ? `<strong>${escapeHtml(formatMeetingTime(leader.startsAt))}</strong> has the most votes.`
+      : `<strong>${escapeHtml(formatMeetingTime(leader.startsAt))}</strong> is the only proposed time.`
+    : "";
+  const select = admin && leader
+    ? `<div class="meeting-finalize">
+         <p>${leadSentence} Press <strong>Date selected</strong> to lock in the selected book together with this date and time for the club.</p>
+         <form method="post" action="/book-club/meeting/select"><button type="submit">Date selected</button></form>
+       </div>`
     : "";
   return { side, below: `${notice}${proposeHint}${empty}${prompt}${list}${select}` };
 }
@@ -205,7 +214,51 @@ function proposeTimeDialog(): string {
     <form method="post" action="/book-club/meeting">
       <input type="hidden" name="date" value="">
       <input type="hidden" name="starts" value="">
-      <label>Time <input name="clock" type="time" required></label>
+      <input type="hidden" name="clock" value="16:00">
+      <div class="dial-picker" aria-label="Choose a meeting time">
+        <div class="dial-readout">
+          <button type="button" class="dial-value active" data-dial-mode="hour" aria-label="Choose hour">04</button>
+          <span class="dial-colon" aria-hidden="true">:</span>
+          <button type="button" class="dial-value" data-dial-mode="minute" aria-label="Choose minutes">00</button>
+          <div class="dial-periods" aria-label="Choose AM or PM">
+            <button type="button" class="dial-period" data-period="AM" aria-pressed="false">AM</button>
+            <button type="button" class="dial-period active" data-period="PM" aria-pressed="true">PM</button>
+          </div>
+        </div>
+        <p class="dial-instruction" aria-live="polite">Select an hour</p>
+        <div class="clock-face" style="--dial-angle: 120deg">
+          <span class="clock-hand" aria-hidden="true"></span>
+          <span class="clock-center" aria-hidden="true"></span>
+          <div class="dial-options dial-hours">
+            <button type="button" class="clock-option" style="--index: 0" data-hour="12">12</button>
+            <button type="button" class="clock-option" style="--index: 1" data-hour="1">1</button>
+            <button type="button" class="clock-option" style="--index: 2" data-hour="2">2</button>
+            <button type="button" class="clock-option" style="--index: 3" data-hour="3">3</button>
+            <button type="button" class="clock-option active" style="--index: 4" data-hour="4">4</button>
+            <button type="button" class="clock-option" style="--index: 5" data-hour="5">5</button>
+            <button type="button" class="clock-option" style="--index: 6" data-hour="6">6</button>
+            <button type="button" class="clock-option" style="--index: 7" data-hour="7">7</button>
+            <button type="button" class="clock-option" style="--index: 8" data-hour="8">8</button>
+            <button type="button" class="clock-option" style="--index: 9" data-hour="9">9</button>
+            <button type="button" class="clock-option" style="--index: 10" data-hour="10">10</button>
+            <button type="button" class="clock-option" style="--index: 11" data-hour="11">11</button>
+          </div>
+          <div class="dial-options dial-minutes" hidden>
+            <button type="button" class="clock-option active" style="--index: 0" data-minute="0">00</button>
+            <button type="button" class="clock-option" style="--index: 1" data-minute="5">05</button>
+            <button type="button" class="clock-option" style="--index: 2" data-minute="10">10</button>
+            <button type="button" class="clock-option" style="--index: 3" data-minute="15">15</button>
+            <button type="button" class="clock-option" style="--index: 4" data-minute="20">20</button>
+            <button type="button" class="clock-option" style="--index: 5" data-minute="25">25</button>
+            <button type="button" class="clock-option" style="--index: 6" data-minute="30">30</button>
+            <button type="button" class="clock-option" style="--index: 7" data-minute="35">35</button>
+            <button type="button" class="clock-option" style="--index: 8" data-minute="40">40</button>
+            <button type="button" class="clock-option" style="--index: 9" data-minute="45">45</button>
+            <button type="button" class="clock-option" style="--index: 10" data-minute="50">50</button>
+            <button type="button" class="clock-option" style="--index: 11" data-minute="55">55</button>
+          </div>
+        </div>
+      </div>
       <div class="confirm-actions">
         <button type="submit">Propose</button>
         <button type="button" class="quiet propose-close">Cancel</button>
@@ -216,9 +269,75 @@ function proposeTimeDialog(): string {
     const proposeDialog = document.querySelector(".propose-time");
     const proposeForm = proposeDialog ? proposeDialog.querySelector("form") : null;
     const proposeLabel = document.querySelector(".propose-date-label");
+    const clockFace = proposeForm ? proposeForm.querySelector(".clock-face") : null;
+    const hourOptions = proposeForm ? proposeForm.querySelectorAll("[data-hour]") : [];
+    const minuteOptions = proposeForm ? proposeForm.querySelectorAll("[data-minute]") : [];
+    const hourDisplay = proposeForm ? proposeForm.querySelector('[data-dial-mode="hour"]') : null;
+    const minuteDisplay = proposeForm ? proposeForm.querySelector('[data-dial-mode="minute"]') : null;
+    const periodOptions = proposeForm ? proposeForm.querySelectorAll("[data-period]") : [];
+    const hours = proposeForm ? proposeForm.querySelector(".dial-hours") : null;
+    const minutes = proposeForm ? proposeForm.querySelector(".dial-minutes") : null;
+    const dialInstruction = proposeForm ? proposeForm.querySelector(".dial-instruction") : null;
+    let dialHour = 4;
+    let dialMinute = 0;
+    let dialPeriod = "PM";
+    let dialMode = "hour";
+    const syncDial = () => {
+      if (!proposeForm) return;
+      const clockInput = proposeForm.querySelector('[name="clock"]');
+      if (hourDisplay) hourDisplay.textContent = String(dialHour).padStart(2, "0");
+      if (minuteDisplay) minuteDisplay.textContent = String(dialMinute).padStart(2, "0");
+      if (hourDisplay) hourDisplay.classList.toggle("active", dialMode === "hour");
+      if (minuteDisplay) minuteDisplay.classList.toggle("active", dialMode === "minute");
+      if (hours instanceof HTMLElement) hours.hidden = dialMode !== "hour";
+      if (minutes instanceof HTMLElement) minutes.hidden = dialMode !== "minute";
+      if (dialInstruction) dialInstruction.textContent = dialMode === "hour" ? "Select an hour" : "Select minutes";
+      hourOptions.forEach((option) => option.classList.toggle("active", Number(option.getAttribute("data-hour")) === dialHour));
+      minuteOptions.forEach((option) => option.classList.toggle("active", Number(option.getAttribute("data-minute")) === dialMinute));
+      periodOptions.forEach((option) => {
+        const active = option.getAttribute("data-period") === dialPeriod;
+        option.classList.toggle("active", active);
+        option.setAttribute("aria-pressed", String(active));
+      });
+      const step = dialMode === "hour" ? dialHour % 12 : dialMinute / 5;
+      if (clockFace instanceof HTMLElement) clockFace.style.setProperty("--dial-angle", String(step * 30) + "deg");
+      if (clockInput instanceof HTMLInputElement) {
+        let hour = dialHour % 12;
+        if (dialPeriod === "PM") hour += 12;
+        clockInput.value = String(hour).padStart(2, "0") + ":" + String(dialMinute).padStart(2, "0");
+      }
+    };
+    const resetDial = () => {
+      dialHour = 4;
+      dialMinute = 0;
+      dialPeriod = "PM";
+      dialMode = "hour";
+      syncDial();
+    };
+    hourOptions.forEach((option) => option.addEventListener("click", () => {
+      dialHour = Number(option.getAttribute("data-hour"));
+      dialMode = "minute";
+      syncDial();
+    }));
+    minuteOptions.forEach((option) => option.addEventListener("click", () => {
+      dialMinute = Number(option.getAttribute("data-minute"));
+      syncDial();
+    }));
+    [hourDisplay, minuteDisplay].forEach((display) => {
+      if (display) display.addEventListener("click", () => {
+        dialMode = display.getAttribute("data-dial-mode") || "hour";
+        syncDial();
+      });
+    });
+    periodOptions.forEach((option) => option.addEventListener("click", () => {
+      dialPeriod = option.getAttribute("data-period") || "PM";
+      syncDial();
+    }));
     document.querySelectorAll(".cal-add").forEach((button) => {
       button.addEventListener("click", () => {
         if (!(proposeDialog instanceof HTMLDialogElement) || !proposeForm || !proposeLabel) return;
+        proposeForm.reset();
+        resetDial();
         const date = button.getAttribute("data-date") || "";
         const dateInput = proposeForm.querySelector("[name=date]");
         if (dateInput instanceof HTMLInputElement) dateInput.value = date;

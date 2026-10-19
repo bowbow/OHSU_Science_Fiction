@@ -416,6 +416,80 @@ export function page(options: {
     }
     dialog.confirm label { margin-top: 0; }
     dialog.confirm .confirm-actions { margin-top: 1rem; }
+    .dial-picker { display: flex; flex-direction: column; align-items: center; }
+    .dial-readout { display: flex; align-items: stretch; justify-content: center; gap: 0.3rem; }
+    dialog.confirm button.dial-value {
+      min-width: 4rem;
+      padding: 0.45rem 0.6rem;
+      border: 1px solid var(--line);
+      border-radius: 0.55rem;
+      color: var(--ink);
+      background: rgba(36, 78, 139, 0.08);
+      font-size: 1.9rem;
+      font-variant-numeric: tabular-nums;
+    }
+    dialog.confirm button.dial-value.active { color: #ffffff; border-color: var(--accent); background: var(--accent); }
+    .dial-colon { align-self: center; font-size: 1.9rem; font-weight: 600; }
+    .dial-periods { display: flex; flex-direction: column; gap: 0.2rem; margin-left: 0.25rem; }
+    dialog.confirm button.dial-period {
+      flex: 1;
+      min-width: 2.9rem;
+      padding: 0.2rem 0.4rem;
+      border: 1px solid var(--line);
+      border-radius: 0.35rem;
+      color: var(--ink);
+      background: transparent;
+      font-size: 0.72rem;
+    }
+    dialog.confirm button.dial-period.active { color: #ffffff; border-color: var(--accent); background: var(--accent); }
+    dialog.confirm .dial-instruction { margin: 0.7rem 0 0.4rem; color: #4d5d73; font-size: 0.78rem; font-weight: 600; }
+    .clock-face {
+      --dial-angle: 120deg;
+      position: relative;
+      width: 15.5rem;
+      max-width: 76vw;
+      aspect-ratio: 1;
+      border: 1px solid rgba(36, 78, 139, 0.16);
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(36, 78, 139, 0.05) 0 52%, rgba(36, 78, 139, 0.1) 53% 100%);
+    }
+    .dial-options { position: absolute; inset: 0; }
+    .dial-options[hidden] { display: none; }
+    .clock-hand {
+      position: absolute;
+      z-index: 1;
+      bottom: 50%;
+      left: calc(50% - 1px);
+      width: 2px;
+      height: 5.75rem;
+      background: var(--accent);
+      transform: rotate(var(--dial-angle));
+      transform-origin: 50% 100%;
+      transition: transform 160ms ease;
+    }
+    .clock-hand::before { content: ""; position: absolute; top: -0.25rem; left: -0.2rem; width: 0.45rem; height: 0.45rem; border-radius: 50%; background: var(--accent); }
+    .clock-center { position: absolute; z-index: 3; top: calc(50% - 0.22rem); left: calc(50% - 0.22rem); width: 0.44rem; height: 0.44rem; border-radius: 50%; background: var(--accent); }
+    dialog.confirm button.clock-option {
+      position: absolute;
+      z-index: 2;
+      top: 50%;
+      left: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 2.35rem;
+      height: 2.35rem;
+      padding: 0;
+      border: 1px solid transparent;
+      border-radius: 50%;
+      color: var(--ink);
+      background: #ffffff;
+      font-size: 0.78rem;
+      font-weight: 600;
+      transform: translate(-50%, -50%) rotate(calc(var(--index) * 30deg)) translateY(-5.75rem) rotate(calc(var(--index) * -30deg));
+    }
+    dialog.confirm button.clock-option:hover { border-color: rgba(36, 78, 139, 0.45); background: #e7ecf5; }
+    dialog.confirm button.clock-option.active { color: #ffffff; border-color: var(--accent); background: var(--accent); }
     .meetings { list-style: none; margin: 0.4rem 0 1rem; padding: 0; display: flex; flex-direction: column; gap: 0.75rem; }
     .meetings li {
       display: flex;
@@ -432,6 +506,19 @@ export function page(options: {
     .meeting-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; }
     .meeting-actions form { margin: 0; }
     .meetings button { padding: 0.28rem 0.7rem; font-size: 0.8rem; }
+    .meeting-finalize {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.7rem 1rem;
+      max-width: 46rem;
+      margin: 1rem 0 0;
+      padding: 0.8rem 1rem;
+      border-left: 3px solid var(--accent);
+      background: rgba(36, 78, 139, 0.08);
+    }
+    .meeting-finalize p { flex: 1 1 26rem; margin: 0; line-height: 1.45; }
+    .meeting-finalize form { margin: 0; }
     @media (max-width: 1050px) {
       .reading { grid-template-columns: minmax(0, 36rem); }
       .books { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -873,6 +960,47 @@ export function page(options: {
       outline: 1px solid var(--hud-teal);
       box-shadow: 0 0 18px rgba(87, 222, 211, 0.24), inset 0 0 16px rgba(87, 222, 211, 0.07);
     }
+    html[data-variant="scifi"] dialog.confirm button.dial-value,
+    html[data-variant="scifi"] dialog.confirm button.dial-period,
+    html[data-variant="scifi"] dialog.confirm button.clock-option {
+      clip-path: none;
+      filter: none;
+      font-family: "Orbitron", sans-serif;
+      letter-spacing: 0.04em;
+      box-shadow: none;
+    }
+    html[data-variant="scifi"] dialog.confirm button.dial-value,
+    html[data-variant="scifi"] dialog.confirm button.dial-period {
+      color: var(--hud-text);
+      border-color: rgba(87, 222, 211, 0.38);
+      border-radius: 0;
+      background: rgba(3, 17, 20, 0.92);
+    }
+    html[data-variant="scifi"] dialog.confirm button.dial-value.active,
+    html[data-variant="scifi"] dialog.confirm button.dial-period.active,
+    html[data-variant="scifi"] dialog.confirm button.clock-option.active {
+      color: #021012;
+      border-color: var(--hud-teal);
+      background: var(--hud-teal);
+      box-shadow: 0 0 14px rgba(87, 222, 211, 0.4);
+    }
+    html[data-variant="scifi"] dialog.confirm .dial-instruction { color: var(--hud-muted); }
+    html[data-variant="scifi"] .clock-face {
+      border-color: rgba(87, 222, 211, 0.42);
+      background:
+        radial-gradient(circle, transparent 0 10%, rgba(87, 222, 211, 0.035) 11% 52%, rgba(3, 17, 20, 0.94) 53% 100%),
+        repeating-radial-gradient(circle, transparent 0 1.45rem, rgba(87, 222, 211, 0.045) 1.5rem 1.53rem);
+      box-shadow: inset 0 0 28px rgba(87, 222, 211, 0.08), 0 0 20px rgba(83, 167, 255, 0.1);
+    }
+    html[data-variant="scifi"] .clock-hand,
+    html[data-variant="scifi"] .clock-hand::before,
+    html[data-variant="scifi"] .clock-center { background: var(--hud-teal); box-shadow: 0 0 8px rgba(87, 222, 211, 0.7); }
+    html[data-variant="scifi"] dialog.confirm button.clock-option {
+      color: var(--hud-text);
+      background: #061416;
+      border-color: rgba(87, 222, 211, 0.16);
+    }
+    html[data-variant="scifi"] dialog.confirm button.clock-option:hover { color: #ffffff; border-color: var(--hud-blue); background: #102c38; }
     html[data-variant="scifi"] button {
       border: 1px solid var(--hud-teal);
       border-radius: 0;
@@ -911,9 +1039,40 @@ export function page(options: {
     html[data-variant="scifi"] .meeting-note,
     html[data-variant="scifi"] .meeting-chosen,
     html[data-variant="scifi"] .matches p { color: var(--hud-muted); }
+    html[data-variant="scifi"] .meeting-finalize {
+      border-left-color: var(--hud-teal);
+      background: linear-gradient(90deg, rgba(87, 222, 211, 0.1), rgba(3, 17, 20, 0.72));
+      box-shadow: inset 0 0 18px rgba(87, 222, 211, 0.04);
+    }
+    html[data-variant="scifi"] .meeting-finalize p { color: var(--hud-muted); }
+    html[data-variant="scifi"] .meeting-finalize strong { color: var(--hud-text); }
     html[data-variant="scifi"] .your-vote,
     html[data-variant="scifi"] .calendar .cal-hit { background: #236c72; }
     html[data-variant="scifi"] .calendar th { color: var(--hud-teal); }
+    html[data-variant="scifi"] .calendar button.cal-add,
+    html[data-variant="scifi"] .calendar button.cal-hit {
+      clip-path: none;
+      box-shadow: none;
+      filter: none;
+      font-family: "Instrument Sans", "Segoe UI", sans-serif;
+      letter-spacing: 0;
+    }
+    html[data-variant="scifi"] .calendar button.cal-add {
+      color: var(--hud-text);
+      border-color: transparent;
+      background: transparent;
+    }
+    html[data-variant="scifi"] .calendar button.cal-add:hover {
+      color: #ffffff;
+      border-color: rgba(87, 222, 211, 0.45);
+      background: rgba(87, 222, 211, 0.12);
+      box-shadow: inset 0 0 12px rgba(87, 222, 211, 0.08);
+    }
+    html[data-variant="scifi"] .calendar button.cal-add-more { color: var(--hud-teal); }
+    html[data-variant="scifi"] .calendar button.cal-hit {
+      color: #ffffff;
+      border-color: rgba(87, 222, 211, 0.35);
+    }
     html[data-variant="scifi"] dialog.confirm {
       color: var(--hud-text);
       border: 1px solid var(--hud-teal);
