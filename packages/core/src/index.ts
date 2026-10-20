@@ -7,12 +7,15 @@ import { openDatabase, type OpenDatabaseOptions } from "./db.ts";
 import { registerWithPassword as registerWithPasswordFn } from "./register-password.ts";
 import { currentMember as currentMemberFn, endSession } from "./session.ts";
 import { signInWithPassword as signInWithPasswordFn } from "./sign-in-password.ts";
+import { deleteFeedback as deleteFeedbackFn, feedbackForAdmin as feedbackForAdminFn, markFeedbackSeen as markFeedbackSeenFn, submitFeedback as submitFeedbackFn } from "./feedback.ts";
 
 export { activityLine, activitySentence } from "./activity.ts";
 export type { ActivityEvent } from "./activity.ts";
 export type { ActionResult, CoreFailure, Result } from "./errors.ts";
 export type { BookClubRoundView, BookSuggestionView, MeetingTimeView } from "./book-club.ts";
 export type { MemberRole, MemberView } from "./member-view.ts";
+export { MAX_FEEDBACK_WORDS, feedbackWordCount } from "./feedback.ts";
+export type { FeedbackView } from "./feedback.ts";
 
 export class Core {
   readonly db: DatabaseSync;
@@ -94,6 +97,22 @@ export class Core {
 
   ensureBookCovers(sessionId: string | null | undefined, lookup: (title: string) => Promise<number | null>) {
     return ensureBookCoversFn(this.db, sessionId, lookup);
+  }
+
+  submitFeedback(input: { sessionId: string | null | undefined; text: string }) {
+    return submitFeedbackFn(this.db, input);
+  }
+
+  feedbackForAdmin(sessionId: string | null | undefined) {
+    return feedbackForAdminFn(this.db, sessionId);
+  }
+
+  markFeedbackSeen(input: { sessionId: string | null | undefined; feedbackId: string }) {
+    return markFeedbackSeenFn(this.db, input);
+  }
+
+  deleteFeedback(input: { sessionId: string | null | undefined; feedbackIds: string[] }) {
+    return deleteFeedbackFn(this.db, input);
   }
 }
 

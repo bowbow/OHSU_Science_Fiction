@@ -9,9 +9,13 @@ test("the register form hides the password and does not show it after submit", a
   });
   const page = await app.handle({ method: "GET", path: "/register", headers: {} });
   assert.match(page.body, /<title>Register · OHSU Science Fiction Bookclub<\/title>/);
+  assert.match(page.body, /<html lang="en" data-variant="scifi">/);
   assert.match(page.body, /<p class="mark">[\s\S]*OHSU SF Bookclub<\/p>/);
   assert.match(page.body, /<header class="banner"><h1>OHSU Science Fiction Bookclub<\/h1><\/header>/);
-  assert.match(page.body, /sessionStorage\.setItem\("site-variant", "scifi"\)/);
+  assert.match(page.body, /requestedVariant === "scifi" \|\| requestedVariant === "classic"/);
+  assert.match(page.body, /sessionStorage\.setItem\("site-variant", requestedVariant\)/);
+  assert.match(page.body, /sessionStorage\.getItem\("site-variant"\) \|\| "scifi"/);
+  assert.match(page.body, /selectedVariant === "classic"[^\n]*delete document\.documentElement\.dataset\.variant/);
   assert.match(page.body, /html\[data-variant="scifi"\]/);
   assert.equal(page.body.includes('class="signed-in-name"'), false);
   assert.match(page.body, /<aside>[\s\S]*href="\/register" aria-current="page"[\s\S]*Sign in[\s\S]*<\/aside>/);

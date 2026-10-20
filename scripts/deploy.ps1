@@ -58,14 +58,17 @@ try {
     packages/core/test/sign-in-password.test.ts `
     packages/core/test/admins.test.ts `
     packages/core/test/book-club.test.ts `
+    packages/core/test/feedback.test.ts `
     packages/core/test/boundary.test.ts `
     apps/web/test/register-page.test.ts `
     apps/web/test/session-cookie.test.ts `
     apps/web/test/admin-role.test.ts `
     apps/web/test/book-club-page.test.ts `
+    apps/web/test/feedback-page.test.ts `
     apps/web/test/health.test.ts `
     apps/web/test/responsive-layout.test.ts `
-    scripts/test/sqlite-backup.test.ts
+    scripts/test/sqlite-backup.test.ts `
+    scripts/test/feedback-migration.test.ts
   if ($LASTEXITCODE -ne 0) { throw "Tests failed; deployment stopped." }
 
   $instanceId = Terraform-Output "instance_id"

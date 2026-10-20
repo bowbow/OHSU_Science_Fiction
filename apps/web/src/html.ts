@@ -12,7 +12,7 @@ export function escapeHtml(value: string): string {
     .replaceAll("'", "&#39;");
 }
 
-export type PageId = "account" | "register" | "sign-in" | "book-club";
+export type PageId = "account" | "register" | "sign-in" | "book-club" | "feedback" | "feedback-admin";
 
 export function memberName(member: MemberView): string {
   return member.username;
@@ -38,16 +38,21 @@ export function page(options: {
     : "";
   const account = options.member?.role === "admin"
     ? `${navItem("Account", "/account", options.active === "account")}
-       ${navItem("Book club", "/book-club", options.active === "book-club")}`
+       ${navItem("Book club", "/book-club", options.active === "book-club")}
+       ${navItem("View feedback", "/admin/feedback", options.active === "feedback-admin")}`
+    : "";
+  const provideFeedback = options.member
+    ? navItem("Provide feedback", "/feedback", options.active === "feedback")
     : "";
   const nav = options.member
     ? `${account}
+       ${provideFeedback}
        ${options.sidebarAction ?? ""}
        <form method="post" action="/sign-out"><button type="submit">Sign out</button></form>`
     : `${navItem("Register", "/register", options.active === "register")}
        ${navItem("Sign in", "/sign-in", options.active === "sign-in")}`;
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-variant="scifi">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -57,11 +62,13 @@ export function page(options: {
     (() => {
       try {
         const requestedVariant = new URLSearchParams(window.location.search).get("variant");
-        if (requestedVariant === "scifi") sessionStorage.setItem("site-variant", "scifi");
-        if (requestedVariant === "classic") sessionStorage.removeItem("site-variant");
-        if (sessionStorage.getItem("site-variant") === "scifi") {
-          document.documentElement.dataset.variant = "scifi";
-        }
+        const hasRequestedVariant = requestedVariant === "scifi" || requestedVariant === "classic";
+        if (hasRequestedVariant) sessionStorage.setItem("site-variant", requestedVariant);
+        const selectedVariant = hasRequestedVariant
+          ? requestedVariant
+          : sessionStorage.getItem("site-variant") || "scifi";
+        if (selectedVariant === "classic") delete document.documentElement.dataset.variant;
+        else document.documentElement.dataset.variant = "scifi";
       } catch {}
     })();
   </script>
@@ -341,6 +348,81 @@ export function page(options: {
       overflow-wrap: anywhere;
     }
     .voter-name::before { content: "•"; margin-right: 0.45rem; color: var(--accent); }
+    .success { color: #23603f; font-weight: 700; }
+    .feedback-form { width: min(100%, 52rem); }
+    .feedback-form form { display: flex; flex-direction: column; gap: 0.75rem; }
+    .feedback-form label { font-weight: 700; }
+    .feedback-form textarea {
+      width: 100%;
+      min-height: 16rem;
+      resize: vertical;
+      padding: 0.8rem;
+      border: 1px solid var(--line);
+      border-radius: 0.55rem;
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.96);
+      font: inherit;
+      line-height: 1.5;
+    }
+    .feedback-form textarea:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .feedback-form-meta { display: flex; justify-content: space-between; gap: 1rem; }
+    .feedback-form-meta p { margin: 0; color: #4d5d73; font-size: 0.85rem; }
+    .feedback-form-meta .over-limit { color: #a11b2f; font-weight: 700; }
+    .feedback-form button { align-self: flex-start; }
+    .feedback-form-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+    .feedback-form-actions > button, .feedback-form-actions > .feedback-cancel {
+      min-width: 10rem;
+      min-height: 2.65rem;
+      margin: 0;
+      padding: 0.7rem 1.2rem;
+      box-sizing: border-box;
+      line-height: normal;
+    }
+    .feedback-cancel {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--accent);
+      border-radius: 999px;
+      color: white;
+      background: var(--accent);
+      font: inherit;
+      font-weight: 400;
+      text-decoration: none;
+    }
+    .feedback-list { list-style: none; display: flex; flex-direction: column; gap: 0.65rem; margin: 1rem 0 0; padding: 0; }
+    .feedback-list > li { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0.65rem; align-items: start; }
+    .feedback-select { display: flex; align-items: center; margin: 0; padding-top: 0.8rem; }
+    .feedback-select input[type="checkbox"] {
+      width: 1.15rem;
+      height: 1.15rem;
+      max-width: none;
+      margin: 0;
+      padding: 0;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+    .feedback-delete-button { margin-top: 1rem; }
+    .feedback-item { border: 1px solid var(--line); border-radius: 0.55rem; background: rgba(255, 255, 255, 0.82); overflow: hidden; }
+    .feedback-summary-line {
+      display: grid;
+      grid-template-columns: 8.5rem minmax(8rem, 12rem) minmax(0, 1fr);
+      gap: 0.8rem;
+      align-items: center;
+      padding: 0.75rem 0.9rem;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 400;
+      transition: background-color 160ms ease, box-shadow 160ms ease;
+    }
+    .feedback-item.is-unseen > .feedback-summary-line {
+      font-weight: 700;
+      background: rgba(36, 78, 139, 0.1);
+      box-shadow: inset 0.22rem 0 var(--accent);
+    }
+    .feedback-summary-line time, .feedback-user { font-weight: inherit; }
+    .feedback-preview { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .feedback-full { margin: 0; padding: 0.9rem; border-top: 1px solid var(--line); white-space: pre-wrap; overflow-wrap: anywhere; }
     .match-note { color: white; text-shadow: 0 1px 1px rgba(28, 63, 114, 0.25); }
     .match-note a { color: white; }
     .matches { list-style: none; display: flex; flex-wrap: wrap; gap: 1.5rem; margin: 0.4rem 0 0; padding: 0; }
@@ -634,9 +716,11 @@ export function page(options: {
       .calendar { border-spacing: 0.08rem; padding-left: 0.22rem; padding-right: 0.22rem; }
       .calendar th { font-size: 0.6rem; }
       .calendar .cal-hit { font-size: 0.65rem; }
+      .feedback-summary-line { grid-template-columns: 6.5rem 7rem minmax(0, 1fr); gap: 0.45rem; padding: 0.65rem; font-size: 0.75rem; }
+      .feedback-form-meta { flex-direction: column; gap: 0.2rem; }
     }
 
-    /* Variant B: a tab-scoped sci-fi treatment for local A/B comparison. */
+    /* Default sci-fi treatment; ?variant=classic selects the original design. */
     html[data-variant="scifi"] {
       color-scheme: dark;
       --hud-bg: #020708;
@@ -1039,6 +1123,62 @@ export function page(options: {
       box-shadow: inset 0 0 14px rgba(87, 222, 211, 0.05), 0 0 10px rgba(87, 222, 211, 0.08);
     }
     html[data-variant="scifi"] .book-float-group > .voter-disclosure .voter-name::before { color: var(--hud-teal); }
+    html[data-variant="scifi"] .success { color: #9bf4ec; text-shadow: 0 0 10px rgba(87, 222, 211, 0.35); }
+    html[data-variant="scifi"] .feedback-form textarea {
+      color: var(--hud-text);
+      border-color: rgba(87, 222, 211, 0.42);
+      border-radius: 0;
+      background: rgba(2, 10, 12, 0.9);
+      box-shadow: inset 0 0 18px rgba(87, 222, 211, 0.05);
+    }
+    html[data-variant="scifi"] .feedback-form textarea:focus { outline-color: var(--hud-teal); }
+    html[data-variant="scifi"] .feedback-form-meta p { color: var(--hud-muted); }
+    html[data-variant="scifi"] .feedback-form-meta .over-limit { color: #ff7c9e; }
+    html[data-variant="scifi"] .feedback-cancel {
+      border-color: var(--hud-teal);
+      border-radius: 0;
+      clip-path: polygon(0.65rem 0, 100% 0, 100% calc(100% - 0.65rem), calc(100% - 0.65rem) 100%, 0 100%, 0 0.65rem);
+      color: #021012;
+      background: var(--hud-teal);
+      font-family: "Orbitron", sans-serif;
+      font-size: 0.72rem;
+      font-weight: 400;
+      letter-spacing: 0.06em;
+      box-shadow: 0 0 16px rgba(87, 222, 211, 0.18);
+      filter:
+        drop-shadow(0 0 5px rgba(87, 222, 211, 0.44))
+        drop-shadow(0 0 13px rgba(83, 167, 255, 0.2));
+      transition: color 150ms ease, background 150ms ease, border-color 150ms ease, filter 150ms ease;
+    }
+    html[data-variant="scifi"] .feedback-cancel:hover {
+      color: #ffffff;
+      border-color: #9bceff;
+      background: var(--hud-blue);
+      filter:
+        drop-shadow(0 0 8px rgba(83, 167, 255, 0.68))
+        drop-shadow(0 0 20px rgba(87, 222, 211, 0.32));
+    }
+    html[data-variant="scifi"] .feedback-select input[type="checkbox"] {
+      accent-color: var(--hud-teal);
+      cursor: url("/assets/target-cursor.svg") 16 16, crosshair;
+    }
+    html[data-variant="scifi"] .feedback-item {
+      border-color: rgba(87, 222, 211, 0.34);
+      border-radius: 0;
+      color: var(--hud-text);
+      background: rgba(3, 17, 20, 0.82);
+      box-shadow: inset 0 0 16px rgba(87, 222, 211, 0.04);
+    }
+    html[data-variant="scifi"] .feedback-summary-line { color: var(--hud-text); }
+    html[data-variant="scifi"] .feedback-item.is-unseen > .feedback-summary-line {
+      background: rgba(87, 222, 211, 0.11);
+      box-shadow: inset 0.22rem 0 var(--hud-teal), inset 0 0 20px rgba(87, 222, 211, 0.04);
+    }
+    html[data-variant="scifi"] .feedback-summary-line:hover { background: rgba(87, 222, 211, 0.08); }
+    html[data-variant="scifi"] .feedback-summary-line time { color: var(--hud-teal); }
+    html[data-variant="scifi"] .feedback-user { color: #8fc6ff; }
+    html[data-variant="scifi"] .feedback-preview { color: var(--hud-muted); }
+    html[data-variant="scifi"] .feedback-full { border-top-color: rgba(87, 222, 211, 0.24); background: rgba(2, 10, 12, 0.75); }
     html[data-variant="scifi"] input {
       color: #ffffff;
       border: 1px solid rgba(87, 222, 211, 0.4);

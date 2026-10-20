@@ -63,6 +63,10 @@ runuser -u bookclub -- env \
   BOOKCLUB_SQLITE_PATH=/var/lib/bookclub/bookclub.sqlite \
   /bin/bash "$staging_path/scripts/backup-database.sh" pre-deploy
 
+runuser -u bookclub -- /usr/local/bin/node --experimental-strip-types \
+  "$staging_path/scripts/migrate-feedback.ts" \
+  /var/lib/bookclub/bookclub.sqlite
+
 if [[ ! -d "$release_path" ]]; then
   mv "$staging_path" "$release_path"
 else

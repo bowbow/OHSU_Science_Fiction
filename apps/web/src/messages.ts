@@ -52,6 +52,14 @@ export function failureSentence(failure: CoreFailure): string {
       return "Propose a meeting time before selecting a date.";
     case "meeting_already_selected":
       return "A meeting time has already been selected.";
+    case "feedback_empty":
+      return "Enter some feedback before submitting.";
+    case "feedback_too_long":
+      return "Feedback must be 1,000 words or fewer.";
+    case "feedback_not_found":
+      return "That feedback item is no longer available.";
+    case "feedback_none_selected":
+      return "Select at least one feedback item to delete.";
   }
 }
 

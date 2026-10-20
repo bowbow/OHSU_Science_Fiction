@@ -22,6 +22,7 @@ Assert-Contains $remote "BOOKCLUB_INITIALIZE_DATABASE=false" "Production startup
 Assert-Contains $remote "Release archive contains a forbidden" "Remote deployment must reject unsafe archives."
 Assert-Contains $remote "current\.rollback" "Remote deployment must retain rollback behavior."
 Assert-Contains $remote "backup-database\.sh.+pre-deploy" "Remote deployment must back up the database before activation."
+Assert-Contains $remote "migrate-feedback\.ts" "Remote deployment must run the explicit feedback migration."
 Assert-Contains $remote "bookclub-backup\.timer" "Remote deployment must install the weekly backup timer."
 Assert-Contains $backup "sqlite-backup\.ts" "Backups must use the consistent SQLite backup utility."
 Assert-Contains $backup "aws s3 cp" "Backups must upload to S3."
@@ -34,5 +35,12 @@ Assert-Contains $terraform 'aws:SecureTransport' "Backup bucket must require TLS
 Assert-Contains $terraform 'ignore_changes = \[ami\]' "Terraform must not replace the stateful instance when the latest AMI changes."
 Assert-Contains $provision '\[switch\]\$PlanOnly' "Provisioning must support review without apply."
 Assert-Contains $provision "get-caller-identity" "Provisioning must verify the selected AWS profile."
+
+$backupPosition = $remote.IndexOf('backup-database.sh" pre-deploy')
+$migrationPosition = $remote.IndexOf('migrate-feedback.ts')
+$activationPosition = $remote.IndexOf('systemctl restart bookclub')
+if ($backupPosition -lt 0 -or $migrationPosition -le $backupPosition -or $activationPosition -le $migrationPosition) {
+  throw "Remote deployment must back up first, migrate second, and activate last."
+}
 
 Write-Host "Deployment script contract tests passed."

@@ -38,6 +38,17 @@ test("narrow forms, dialogs, calendars, and controls are constrained", () => {
   assert.match(source, /@media \(max-width:\s*700px\)[\s\S]*?button[^}]*min-height:\s*44px/);
 });
 
+test("unseen feedback summaries are bold and seen summaries are normal", () => {
+  assert.match(source, /\.feedback-summary-line \{[\s\S]*?font-weight: 400;/);
+  assert.match(source, /\.feedback-item\.is-unseen > \.feedback-summary-line \{[^}]*font-weight: 700;[^}]*background: rgba\(36, 78, 139, 0\.1\);/s);
+  assert.match(source, /html\[data-variant="scifi"\] \.feedback-item\.is-unseen > \.feedback-summary-line \{[^}]*background: rgba\(87, 222, 211, 0\.11\);/s);
+});
+
+test("feedback submit and cancel controls share the same dimensions and sci-fi typography", () => {
+  assert.match(source, /\.feedback-form-actions > button, \.feedback-form-actions > \.feedback-cancel \{[^}]*min-width: 10rem;[^}]*min-height: 2\.65rem;[^}]*margin: 0;[^}]*padding: 0\.7rem 1\.2rem;/s);
+  assert.match(source, /html\[data-variant="scifi"\] \.feedback-cancel \{[^}]*color: #021012;[^}]*background: var\(--hud-teal\);[^}]*font-family: "Orbitron", sans-serif;[^}]*font-size: 0\.72rem;/s);
+});
+
 test("the sci-fi title keeps mixed case and its chromatic offset", () => {
   assert.doesNotMatch(
     source,

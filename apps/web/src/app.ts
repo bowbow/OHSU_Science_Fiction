@@ -4,6 +4,8 @@ import { closeBookClubForm, formatMeetingTime, openBookClubForm, proposeMeetingF
 import { renderAccountPage } from "./account-page.ts";
 import { renderRegisterPage, registerWithPasswordForm } from "./register-page.ts";
 import { renderSignInPage, signInWithPasswordForm } from "./sign-in-page.ts";
+import { renderAdminFeedbackPage, renderFeedbackPage, submitFeedbackForm } from "./feedback-page.ts";
+import { failureSentence } from "./messages.ts";
 
 export type WebRequest = {
   method: string;
@@ -97,6 +99,82 @@ export function createApp(options: {
           member: null,
           error: outcome.error,
         }),
+      );
+    }
+    if (method === "GET" && path === "/feedback") {
+      const submitted = new URLSearchParams(request.query ?? "").get("submitted") === "1";
+      return html(
+        renderFeedbackPage({ member, submitted }),
+        member && sessionId ? sessionCookie(sessionId, secure) : undefined,
+      );
+    }
+    if (method === "POST" && path === "/feedback") {
+      const text = form.get("feedback") ?? "";
+      const outcome = submitFeedbackForm(options.core, { sessionId, text });
+      if (outcome.submitted) {
+        return redirect("/feedback?submitted=1", sessionId ? sessionCookie(sessionId, secure) : undefined);
+      }
+      return html(
+        renderFeedbackPage({
+          member: options.core.currentMember(sessionId),
+          error: outcome.error,
+          text,
+        }),
+        member && sessionId ? sessionCookie(sessionId, secure) : undefined,
+      );
+    }
+    if (method === "GET" && path === "/admin/feedback") {
+      const result = options.core.feedbackForAdmin(sessionId);
+      const deletedRaw = new URLSearchParams(request.query ?? "").get("deleted");
+      const deleted = deletedRaw === null ? undefined : Number(deletedRaw);
+      return html(
+        renderAdminFeedbackPage({
+          member,
+          feedback: result.ok ? result.value : [],
+          error: result.ok ? undefined : failureSentence(result.failure),
+          deleted: Number.isSafeInteger(deleted) && deleted! >= 0 ? deleted : undefined,
+        }),
+        member && sessionId ? sessionCookie(sessionId, secure) : undefined,
+      );
+    }
+    if (method === "POST" && path === "/admin/feedback/seen") {
+      const result = options.core.markFeedbackSeen({
+        sessionId,
+        feedbackId: form.get("feedback") ?? "",
+      });
+      if (result.ok) {
+        return { status: 204, headers: { "Cache-Control": "no-store" }, body: "" };
+      }
+      const status = result.failure.code === "feedback_not_found" ? 404 : 403;
+      return {
+        status,
+        headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" },
+        body: JSON.stringify({ error: result.failure.code }),
+      };
+    }
+    if (method === "POST" && path === "/admin/feedback/delete") {
+      const result = options.core.deleteFeedback({
+        sessionId,
+        feedbackIds: form.getAll("feedback"),
+      });
+      if (result.ok) {
+        return redirect(`/admin/feedback?deleted=${result.value.deleted}`, sessionId ? sessionCookie(sessionId, secure) : undefined);
+      }
+      if (result.failure.code === "not_signed_in" || result.failure.code === "not_an_admin") {
+        return {
+          status: 403,
+          headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" },
+          body: failureSentence(result.failure),
+        };
+      }
+      const feedback = options.core.feedbackForAdmin(sessionId);
+      return html(
+        renderAdminFeedbackPage({
+          member,
+          feedback: feedback.ok ? feedback.value : [],
+          error: failureSentence(result.failure),
+        }),
+        member && sessionId ? sessionCookie(sessionId, secure) : undefined,
       );
     }
     if (method === "GET" && path === "/book-club") {

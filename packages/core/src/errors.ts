@@ -30,7 +30,11 @@ export type CoreFailure =
   | { code: "meeting_tie" }
   | { code: "not_in_the_meeting_tie" }
   | { code: "no_meeting_times" }
-  | { code: "meeting_already_selected" };
+  | { code: "meeting_already_selected" }
+  | { code: "feedback_empty" }
+  | { code: "feedback_too_long" }
+  | { code: "feedback_not_found" }
+  | { code: "feedback_none_selected" };
 
 export type Result =
   | { ok: true; sessionId: string; member: import("./member-view.ts").MemberView }

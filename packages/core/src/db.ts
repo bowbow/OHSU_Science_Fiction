@@ -65,6 +65,24 @@ CREATE TABLE IF NOT EXISTS meeting_votes (
   voted_at TEXT NOT NULL,
   UNIQUE (meeting_time_id, member_id)
 );
+
+CREATE TABLE IF NOT EXISTS feedback_entries (
+  id TEXT PRIMARY KEY,
+  member_id TEXT NOT NULL REFERENCES members(id),
+  body TEXT NOT NULL CHECK (length(trim(body)) > 0),
+  submitted_at TEXT NOT NULL,
+  deleted_at TEXT
+);
+
+CREATE INDEX IF NOT EXISTS feedback_entries_newest
+  ON feedback_entries(submitted_at DESC);
+
+CREATE TABLE IF NOT EXISTS feedback_views (
+  feedback_id TEXT NOT NULL REFERENCES feedback_entries(id) ON DELETE CASCADE,
+  admin_member_id TEXT NOT NULL REFERENCES members(id),
+  seen_at TEXT NOT NULL,
+  PRIMARY KEY (feedback_id, admin_member_id)
+);
 `;
 
 export type OpenDatabaseOptions = {
@@ -87,6 +105,7 @@ export function openDatabase(path: string, options: OpenDatabaseOptions = {}): D
     ensureCoverColumns(db);
     ensureSelectedSuggestionColumn(db);
     ensureSelectedMeetingColumn(db);
+    ensureFeedbackDeletedColumn(db);
   }
   return db;
 }
@@ -122,5 +141,12 @@ function ensureRoleColumn(db: DatabaseSync): void {
   const columns = db.prepare("PRAGMA table_info(members)").all() as { name: string }[];
   if (columns.length > 0 && !columns.some((column) => column.name === "role")) {
     db.exec("ALTER TABLE members ADD COLUMN role TEXT NOT NULL DEFAULT 'regular'");
+  }
+}
+
+function ensureFeedbackDeletedColumn(db: DatabaseSync): void {
+  const columns = db.prepare("PRAGMA table_info(feedback_entries)").all() as { name: string }[];
+  if (columns.length > 0 && !columns.some((column) => column.name === "deleted_at")) {
+    db.exec("ALTER TABLE feedback_entries ADD COLUMN deleted_at TEXT");
   }
 }

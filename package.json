@@ -14,7 +14,7 @@
   },
   "scripts": {
     "dev": "node --watch --experimental-strip-types apps/web/src/server.ts",
-    "test": "node --experimental-strip-types --test packages/core/test/register-password.test.ts packages/core/test/sign-in-password.test.ts packages/core/test/admins.test.ts packages/core/test/book-club.test.ts packages/core/test/activity.test.ts packages/core/test/boundary.test.ts apps/web/test/register-page.test.ts apps/web/test/session-cookie.test.ts apps/web/test/admin-role.test.ts apps/web/test/book-club-page.test.ts apps/web/test/activity-log.test.ts apps/web/test/health.test.ts apps/web/test/responsive-layout.test.ts scripts/test/sqlite-backup.test.ts",
+    "test": "node --experimental-strip-types --test packages/core/test/register-password.test.ts packages/core/test/sign-in-password.test.ts packages/core/test/admins.test.ts packages/core/test/book-club.test.ts packages/core/test/feedback.test.ts packages/core/test/activity.test.ts packages/core/test/boundary.test.ts apps/web/test/register-page.test.ts apps/web/test/session-cookie.test.ts apps/web/test/admin-role.test.ts apps/web/test/book-club-page.test.ts apps/web/test/feedback-page.test.ts apps/web/test/activity-log.test.ts apps/web/test/health.test.ts apps/web/test/responsive-layout.test.ts scripts/test/sqlite-backup.test.ts scripts/test/feedback-migration.test.ts",
     "start": "node --experimental-strip-types apps/web/src/server.ts"
   }
 }
