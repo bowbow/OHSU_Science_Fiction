@@ -258,9 +258,10 @@ resource "aws_instance" "bookclub" {
 
   lifecycle {
     # The database is stored on this instance's root volume. A newer value in
-    # the "latest Amazon Linux" parameter must not replace the stateful server
-    # during an unrelated Terraform apply.
-    ignore_changes = [ami]
+    # the "latest Amazon Linux" parameter or a bootstrap-script edit must not
+    # replace or reconfigure the stateful server during an unrelated apply.
+    # Runtime configuration is maintained by the deployment process.
+    ignore_changes = [ami, user_data]
   }
 
   depends_on = [aws_iam_role_policy_attachment.systems_manager]
@@ -313,8 +314,8 @@ resource "aws_iam_role_policy" "scheduler_instance" {
 
 resource "aws_scheduler_schedule" "stop" {
   name                         = "${local.name_prefix}-stop"
-  description                  = "Stop BookClub at 9:00pm Pacific."
-  schedule_expression          = "cron(0 21 * * ? *)"
+  description                  = "Stop BookClub at midnight Pacific."
+  schedule_expression          = "cron(0 0 * * ? *)"
   schedule_expression_timezone = "America/Los_Angeles"
   state                        = "ENABLED"
 
@@ -333,8 +334,8 @@ resource "aws_scheduler_schedule" "stop" {
 
 resource "aws_scheduler_schedule" "start" {
   name                         = "${local.name_prefix}-start"
-  description                  = "Start BookClub at 7:00am Pacific."
-  schedule_expression          = "cron(0 7 * * ? *)"
+  description                  = "Start BookClub at 6:00am Pacific."
+  schedule_expression          = "cron(0 6 * * ? *)"
   schedule_expression_timezone = "America/Los_Angeles"
   state                        = "ENABLED"
 
