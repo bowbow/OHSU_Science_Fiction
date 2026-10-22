@@ -60,8 +60,9 @@ export function createApp(options: {
       );
     }
     if (method === "POST" && path === "/register") {
+      const username = form.get("username") ?? "";
       const outcome = registerWithPasswordForm(options.core, {
-        username: form.get("username") ?? "",
+        username,
         password: form.get("password") ?? "",
         sessionId,
       });
@@ -73,6 +74,7 @@ export function createApp(options: {
         renderRegisterPage({
           member: options.core.currentMember(sessionId),
           error: outcome.error,
+          username,
         }),
       );
     }

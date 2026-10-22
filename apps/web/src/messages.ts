@@ -63,10 +63,12 @@ export function failureSentence(failure: CoreFailure): string {
   }
 }
 
-function usernameReason(reason: "empty" | "too_short" | "too_long" | "bad_characters" | "must_start_alphanumeric"): string {
+function usernameReason(reason: "empty" | "not_ohsu_email" | "too_short" | "too_long" | "bad_characters" | "must_start_alphanumeric"): string {
   switch (reason) {
     case "empty":
       return "Enter a username.";
+    case "not_ohsu_email":
+      return "Please use your OHSU email as your username.";
     case "too_short":
       return "Use at least 3 characters.";
     case "too_long":

@@ -29,7 +29,7 @@ test("successful club actions are recorded and refusals are not", async () => {
     method: "POST",
     path: "/register",
     headers: {},
-    body: "username=Ada&password=secret-phrase",
+    body: "username=Ada%40ohsu.edu&password=secret-phrase",
   });
   const cookie = cookieOf(registered);
   await app.handle({ method: "POST", path: "/sign-out", headers: { cookie } });
@@ -37,14 +37,14 @@ test("successful club actions are recorded and refusals are not", async () => {
     method: "POST",
     path: "/sign-in",
     headers: {},
-    body: "username=Ada&password=wrong-phrase",
+    body: "username=Ada%40ohsu.edu&password=wrong-phrase",
   });
   assert.equal(refused.status, 200);
   const signedIn = await app.handle({
     method: "POST",
     path: "/sign-in",
     headers: {},
-    body: "username=Ada&password=secret-phrase",
+    body: "username=Ada%40ohsu.edu&password=secret-phrase",
   });
   const ada = cookieOf(signedIn);
 
@@ -81,13 +81,13 @@ test("successful club actions are recorded and refusals are not", async () => {
   });
 
   const text = lines.join("\n");
-  assert.match(text, /Ada registered/);
-  assert.match(text, /Ada signed out/);
-  assert.match(text, /Ada signed in/);
+  assert.match(text, /Ada@ohsu\.edu registered/);
+  assert.match(text, /Ada@ohsu\.edu signed out/);
+  assert.match(text, /Ada@ohsu\.edu signed in/);
   assert.match(text, /bow signed in/);
   assert.match(text, /bow opened the club for book suggestions/);
   assert.match(text, /bow suggested "Foundation"/);
-  assert.match(text, /Ada voted for "Foundation"/);
+  assert.match(text, /Ada@ohsu\.edu voted for "Foundation"/);
   assert.equal(text.includes("moved their vote"), false);
   assert.equal(text.includes("secret-phrase"), false);
   assert.equal(text.includes("wrong-phrase"), false);

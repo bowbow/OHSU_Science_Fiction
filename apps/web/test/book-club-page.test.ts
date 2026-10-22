@@ -45,9 +45,9 @@ test("admins add books and regular members can only vote", async () => {
     method: "POST",
     path: "/register",
     headers: { "content-type": "application/x-www-form-urlencoded" },
-    body: "username=Ada&password=secret",
+    body: "username=Ada%40ohsu.edu&password=secret",
   });
-  const regular = await signIn(app, "Ada", "secret");
+  const regular = await signIn(app, "Ada@ohsu.edu", "secret");
   const refused = await app.handle({
     method: "POST",
     path: "/book-club/open",
@@ -106,9 +106,9 @@ test("only an admin can remove books", async () => {
     method: "POST",
     path: "/register",
     headers: { "content-type": "application/x-www-form-urlencoded" },
-    body: "username=Ada&password=secret",
+    body: "username=Ada%40ohsu.edu&password=secret",
   });
-  const regular = await signIn(app, "Ada", "secret");
+  const regular = await signIn(app, "Ada@ohsu.edu", "secret");
   await app.handle({
     method: "POST",
     path: "/book-club/suggestions",
@@ -217,9 +217,9 @@ test("members cast one vote, can move it, and the most votes are listed first", 
     method: "POST",
     path: "/register",
     headers: { "content-type": "application/x-www-form-urlencoded" },
-    body: "username=Ada&password=secret",
+    body: "username=Ada%40ohsu.edu&password=secret",
   });
-  const regular = await signIn(app, "Ada", "secret");
+  const regular = await signIn(app, "Ada@ohsu.edu", "secret");
   await app.handle({
     method: "POST",
     path: "/book-club/suggestions",
@@ -269,7 +269,7 @@ test("members cast one vote, can move it, and the most votes are listed first", 
   assert.match(adminDune, /<details class="voter-disclosure">/);
   assert.match(adminDune, /<\/div><details class="voter-disclosure">/);
   assert.match(adminDune, /<summary>View voters<\/summary>/);
-  assert.match(adminDune, /class="voter-name" role="listitem">Ada<\/span>/);
+  assert.match(adminDune, /class="voter-name" role="listitem">Ada@ohsu\.edu<\/span>/);
   assert.match(adminDune, /class="voter-name" role="listitem">bow<\/span>/);
   assert.equal(item(adminView.body, "The Hobbit").includes("View voters"), false);
 
@@ -286,7 +286,7 @@ test("members cast one vote, can move it, and the most votes are listed first", 
   assert.equal(item(movedAdminView.body, "Dune").includes("View voters"), false);
   const adminHobbit = item(movedAdminView.body, "The Hobbit");
   assert.match(adminHobbit, /<details class="voter-disclosure">/);
-  assert.match(adminHobbit, /class="voter-name" role="listitem">Ada<\/span>/);
+  assert.match(adminHobbit, /class="voter-name" role="listitem">Ada@ohsu\.edu<\/span>/);
   assert.match(adminHobbit, /class="voter-name" role="listitem">bow<\/span>/);
 
   const signedOut = await app.handle({
@@ -313,9 +313,9 @@ test("an admin closes the call and a regular member sees the winning book alone"
     method: "POST",
     path: "/register",
     headers: { "content-type": "application/x-www-form-urlencoded" },
-    body: "username=Ada&password=secret",
+    body: "username=Ada%40ohsu.edu&password=secret",
   });
-  const regular = await signIn(app, "Ada", "secret");
+  const regular = await signIn(app, "Ada@ohsu.edu", "secret");
   const openPage = await app.handle({ method: "GET", path: "/book-club", headers: { cookie: regular } });
   assert.equal(openPage.body.includes("Close the call for new books"), false);
   await app.handle({
@@ -372,9 +372,9 @@ test("a tie asks the admin to choose and hides that choice from a regular member
     method: "POST",
     path: "/register",
     headers: { "content-type": "application/x-www-form-urlencoded" },
-    body: "username=Ada&password=secret",
+    body: "username=Ada%40ohsu.edu&password=secret",
   });
-  const regular = await signIn(app, "Ada", "secret");
+  const regular = await signIn(app, "Ada@ohsu.edu", "secret");
   const memberPage = await app.handle({ method: "GET", path: "/book-club", headers: { cookie: regular } });
   assert.equal(memberPage.body.includes("Choose this book"), false);
   const hobbitId = suggestionId(tied.body, "The Hobbit");
@@ -405,9 +405,9 @@ test("an admin starts over and the club opens for suggestions with an empty list
     method: "POST",
     path: "/register",
     headers: { "content-type": "application/x-www-form-urlencoded" },
-    body: "username=Ada&password=secret",
+    body: "username=Ada%40ohsu.edu&password=secret",
   });
-  const regular = await signIn(app, "Ada", "secret");
+  const regular = await signIn(app, "Ada@ohsu.edu", "secret");
   await app.handle({ method: "POST", path: "/book-club/close", headers: { cookie: admin } });
   const chosen = await app.handle({ method: "GET", path: "/book-club", headers: { cookie: admin } });
   assert.match(chosen.body, /The book club will read The Hobbit/);
@@ -511,9 +511,9 @@ test("members vote for meeting times and a regular member sees the chosen date",
     method: "POST",
     path: "/register",
     headers: { "content-type": "application/x-www-form-urlencoded" },
-    body: "username=Ada&password=secret",
+    body: "username=Ada%40ohsu.edu&password=secret",
   });
-  const regular = await signIn(app, "Ada", "secret");
+  const regular = await signIn(app, "Ada@ohsu.edu", "secret");
   const early = await app.handle({
     method: "POST",
     path: "/book-club/meeting",

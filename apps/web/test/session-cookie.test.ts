@@ -11,7 +11,7 @@ test("the session cookie remains until sign-out", async () => {
     method: "POST",
     path: "/register",
     headers: {},
-    body: "username=Ada&password=Reader12",
+    body: "username=Ada%40ohsu.edu&password=Reader12",
   });
   const setCookie = registered.headers["Set-Cookie"];
   assert.match(setCookie ?? "", /bookclub_session=/);
@@ -27,5 +27,5 @@ test("the session cookie remains until sign-out", async () => {
   assert.equal(signedOut.status, 303);
   const after = await app.handle({ method: "GET", path: "/account", headers: { cookie } });
   assert.match(after.body, /signed out/i);
-  assert.equal(after.body.includes(">Ada<") || after.body.includes("as Ada"), false);
+  assert.equal(after.body.includes(">Ada@ohsu.edu<") || after.body.includes("as Ada@ohsu.edu"), false);
 });

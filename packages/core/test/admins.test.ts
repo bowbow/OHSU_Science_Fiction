@@ -15,7 +15,7 @@ test("startup does not create an administrator", () => {
     failure: { code: "invalid_credentials" },
   });
 
-  const registered = core.registerWithPassword({ username: "Ada", password: "admin" });
+  const registered = core.registerWithPassword({ username: "Ada@ohsu.edu", password: "admin" });
   assert.equal(registered.ok, true);
   if (registered.ok) {
     assert.equal(registered.member.role, "regular");
@@ -71,7 +71,7 @@ test("disabled initialization leaves an existing database file unchanged", () =>
   const path = join(dir, "club.sqlite");
   try {
     const initialized = openCore(path);
-    initialized.registerWithPassword({ username: "Ada", password: "secret" });
+    initialized.registerWithPassword({ username: "Ada@ohsu.edu", password: "secret" });
     initialized.db.close();
     const before = readFileSync(path);
 

@@ -21,13 +21,17 @@ test("the register form hides the password and does not show it after submit", a
   assert.match(page.body, /<aside>[\s\S]*href="\/register" aria-current="page"[\s\S]*Sign in[\s\S]*<\/aside>/);
   assert.equal(/gmail|accounts\.google|sign in with google/i.test(page.body), false);
   assert.match(page.body, /type="password"/);
+  assert.match(page.body, /name="username" type="email"/);
+  assert.match(page.body, /pattern="\[\^@\\s\]\+@\[Oo\]\[Hh\]\[Ss\]\[Uu\]\\\.\[Ee\]\[Dd\]\[Uu\]"/);
+  assert.match(page.body, /Please use your OHSU email as your username\./);
+  assert.match(page.body, /Choose your password\. Please do not use a password that you use elsewhere!/);
   assert.equal(page.body.includes("name=\"password\" type=\"text\""), false);
 
   const submitted = await app.handle({
     method: "POST",
     path: "/register",
     headers: { "content-type": "application/x-www-form-urlencoded" },
-    body: "username=Ada&password=Reader12",
+    body: "username=Ada%40ohsu.edu&password=Reader12",
   });
   assert.equal(submitted.body.includes("Reader12"), false);
   assert.equal(submitted.headers["Set-Cookie"]?.includes("Reader12"), false);
@@ -40,13 +44,30 @@ test("the register form hides the password and does not show it after submit", a
     headers: { cookie: cookie.split(";")[0] },
   });
   assert.equal(account.body.includes("Reader12"), false);
-  assert.match(account.body, /class="signed-in-name">Ada</);
+  assert.match(account.body, /class="signed-in-name">Ada@ohsu\.edu</);
   assert.equal(account.body.includes('class="member-role"'), false);
-  assert.match(account.body, /<aside>[\s\S]*Ada[\s\S]*Sign out[\s\S]*<\/aside>/);
+  assert.match(account.body, /<aside>[\s\S]*Ada@ohsu\.edu[\s\S]*Sign out[\s\S]*<\/aside>/);
   assert.equal(account.body.includes('href="/book-club"'), false);
   assert.equal(account.body.includes('href="/account"'), false);
-  assert.match(account.body, /<main>[\s\S]*OHSU Science Fiction Bookclub[\s\S]*You are signed in as Ada[\s\S]*You are a regular member/);
+  assert.match(account.body, /<main>[\s\S]*OHSU Science Fiction Bookclub[\s\S]*You are signed in as Ada@ohsu\.edu[\s\S]*You are a regular member/);
 
   const google = await app.handle({ method: "POST", path: "/register/google", headers: {}, body: "" });
   assert.equal(google.status, 404);
+});
+
+test("a non-OHSU email shows an error and keeps the registration form open", async () => {
+  const app = createApp({ core: openCore(":memory:") });
+  const submitted = await app.handle({
+    method: "POST",
+    path: "/register",
+    headers: { "content-type": "application/x-www-form-urlencoded" },
+    body: "username=ada%40gmail.com&password=Reader12",
+  });
+
+  assert.equal(submitted.status, 200);
+  assert.match(submitted.body, /The username is not valid\. Please use your OHSU email as your username\./);
+  assert.match(submitted.body, /<form class="sheet" method="post" action="\/register" novalidate>/);
+  assert.match(submitted.body, /class="error form-error" role="alert"/);
+  assert.match(submitted.body, /value="ada@gmail\.com"/);
+  assert.equal(submitted.headers["Set-Cookie"], undefined);
 });

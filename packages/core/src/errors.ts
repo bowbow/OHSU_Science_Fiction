@@ -1,5 +1,6 @@
 export type UsernameInvalidReason =
   | "empty"
+  | "not_ohsu_email"
   | "too_short"
   | "too_long"
   | "bad_characters"

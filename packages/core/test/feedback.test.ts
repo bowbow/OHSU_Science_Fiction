@@ -9,7 +9,7 @@ import { addTestAdmin } from "./support.ts";
 
 test("signed-in members can submit up to 1,000 words of feedback", () => {
   const core = openCore(":memory:");
-  const registered = core.registerWithPassword({ username: "Ada", password: "reader" });
+  const registered = core.registerWithPassword({ username: "Ada@ohsu.edu", password: "reader" });
   assert.equal(registered.ok, true);
   if (!registered.ok) return;
 
@@ -36,8 +36,8 @@ test("only admins can list feedback and the newest entries come first", () => {
   const core = openCore(":memory:");
   addTestAdmin(core);
   addTestAdmin(core, "Pam", "admin");
-  const ada = core.registerWithPassword({ username: "Ada", password: "reader" });
-  const bob = core.registerWithPassword({ username: "Bob", password: "reader" });
+  const ada = core.registerWithPassword({ username: "Ada@ohsu.edu", password: "reader" });
+  const bob = core.registerWithPassword({ username: "Bob@ohsu.edu", password: "reader" });
   assert.equal(ada.ok, true);
   assert.equal(bob.ok, true);
   if (!ada.ok || !bob.ok) return;
@@ -67,8 +67,8 @@ test("only admins can list feedback and the newest entries come first", () => {
   assert.equal(listed.ok, true);
   if (!listed.ok) return;
   assert.deepEqual(listed.value.map((item) => ({ username: item.username, text: item.text, seen: item.seen })), [
-    { username: "Bob", text: "The new website design is excellent.", seen: false },
-    { username: "Ada", text: "Please add more space opera.", seen: false },
+    { username: "Bob@ohsu.edu", text: "The new website design is excellent.", seen: false },
+    { username: "Ada@ohsu.edu", text: "Please add more space opera.", seen: false },
   ]);
   assert.equal(listed.value[0]?.memberId, bob.member.id);
 
@@ -98,7 +98,7 @@ test("an admin can delete several feedback items for every admin", () => {
   const core = openCore(":memory:");
   addTestAdmin(core);
   addTestAdmin(core, "Pam", "admin");
-  const member = core.registerWithPassword({ username: "Ada", password: "reader" });
+  const member = core.registerWithPassword({ username: "Ada@ohsu.edu", password: "reader" });
   assert.equal(member.ok, true);
   if (!member.ok) return;
 

@@ -202,6 +202,7 @@ export function page(options: {
     }
     .sheet { max-width: 26rem; margin-top: 1rem; padding: 1.25rem 1.3rem 1.4rem; }
     label { display: block; margin-top: 0.9rem; font-weight: 600; }
+    .form-help { margin: 0.45rem 0 0; color: #526174; font-size: 0.9rem; line-height: 1.4; }
     input {
       width: 100%;
       max-width: 24rem;
@@ -233,6 +234,13 @@ export function page(options: {
     }
     button.quiet:hover { background: rgba(36, 78, 139, 0.08); }
     .error { color: #9f1239; font-weight: 600; }
+    .form-error {
+      margin: 0 0 1rem;
+      padding: 0.75rem 0.9rem;
+      border: 1px solid currentColor;
+      border-radius: 0.75rem;
+      background: rgba(159, 18, 57, 0.08);
+    }
     .reading {
       display: grid;
       grid-template-columns: auto minmax(26rem, 36rem);
@@ -871,6 +879,15 @@ export function page(options: {
     html[data-variant="scifi"] summary,
     html[data-variant="scifi"] label[for] {
       cursor: url("/assets/target-cursor.svg") 16 16, crosshair;
+    }
+    html[data-variant="scifi"] .form-help { color: #8faeb2; }
+    html[data-variant="scifi"] .form-error {
+      color: #ff9bac;
+      border-color: rgba(255, 100, 128, 0.82);
+      border-radius: 0;
+      background: rgba(95, 8, 31, 0.58);
+      box-shadow: 0 0 16px rgba(255, 75, 109, 0.2);
+      clip-path: polygon(0 0, calc(100% - 0.7rem) 0, 100% 0.7rem, 100% 100%, 0.7rem 100%, 0 calc(100% - 0.7rem));
     }
     html[data-variant="scifi"] input { cursor: text; }
     html[data-variant="scifi"] nav a,

@@ -5,6 +5,7 @@ import { failureSentence } from "./messages.ts";
 export function renderRegisterPage(options: {
   member: MemberView | null;
   error?: string;
+  username?: string;
 }): string {
   if (options.member) {
     return page({
@@ -14,15 +15,21 @@ export function renderRegisterPage(options: {
       body: `<p class="error">You are already signed in.</p><p><a href="/account">Go to your account</a></p>`,
     });
   }
-  const error = options.error ? `<p class="error">${escapeHtml(options.error)}</p>` : "";
+  const error = options.error
+    ? `<p class="error form-error" role="alert">${escapeHtml(options.error)}</p>`
+    : "";
   return page({
     title: "Register",
     member: null,
     active: "register",
-    body: `${error}
-<form class="sheet" method="post" action="/register">
-  <label>Username <input name="username" autocomplete="username" required></label>
-  <label>Password <input name="password" type="password" autocomplete="new-password"></label>
+    body: `<form class="sheet" method="post" action="/register" novalidate>
+  ${error}
+  <label for="register-username">Username</label>
+  <input id="register-username" name="username" type="email" autocomplete="username" required pattern="[^@\\s]+@[Oo][Hh][Ss][Uu]\\.[Ee][Dd][Uu]" title="Please use your OHSU email as your username." aria-describedby="register-username-help" value="${escapeHtml(options.username ?? "")}">
+  <p class="form-help" id="register-username-help">Please use your OHSU email as your username.</p>
+  <label for="register-password">Password</label>
+  <input id="register-password" name="password" type="password" autocomplete="new-password" aria-describedby="register-password-help">
+  <p class="form-help" id="register-password-help">Choose your password. Please do not use a password that you use elsewhere!</p>
   <button type="submit">Create account</button>
 </form>`,
   });

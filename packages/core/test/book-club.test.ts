@@ -11,13 +11,13 @@ function adminSession() {
   if (!admin.ok) {
     throw new Error("admin sign-in failed");
   }
-  const member = core.registerWithPassword({ username: "Ada", password: "secret" });
+  const member = core.registerWithPassword({ username: "Ada@ohsu.edu", password: "secret" });
   assert.equal(member.ok, true);
   if (!member.ok) {
     throw new Error("registration failed");
   }
   core.signOut(member.sessionId);
-  const regular = core.signInWithPassword({ username: "Ada", password: "secret" });
+  const regular = core.signInWithPassword({ username: "Ada@ohsu.edu", password: "secret" });
   assert.equal(regular.ok, true);
   if (!regular.ok) {
     throw new Error("regular sign-in failed");
@@ -67,7 +67,7 @@ test("an admin suggestion is remembered and duplicates are refused", () => {
   });
 
   core.signOut(regularId);
-  const returned = core.signInWithPassword({ username: "ada", password: "secret" });
+  const returned = core.signInWithPassword({ username: "ada@ohsu.edu", password: "secret" });
   assert.equal(returned.ok, true);
   if (!returned.ok) {
     return;
@@ -196,7 +196,7 @@ test("a member has one vote, can move it, and books are ordered by votes", () =>
   assert.equal("voters" in (suggestions(core, regularId).find((item) => item.title === "Dune") ?? {}), false);
   const adminDune = suggestions(core, adminId).find((item) => item.title === "Dune");
   assert.equal(adminDune?.votedByMe, true);
-  assert.deepEqual(adminDune?.voters, ["Ada", "bow"]);
+  assert.deepEqual(adminDune?.voters, ["Ada@ohsu.edu", "bow"]);
   assert.deepEqual(suggestions(core, adminId).find((item) => item.title === "The Hobbit")?.voters, []);
 
   assert.equal(core.removeBookSuggestion({ sessionId: adminId, suggestionId: dune.id }).ok, true);

@@ -16,7 +16,7 @@ test("database initialization is configurable and defaults on locally", () => {
 
 test("health reports availability without exposing club data", async () => {
   const core = openCore(":memory:");
-  core.registerWithPassword({ username: "private-member", password: "private-password" });
+  core.registerWithPassword({ username: "private-member@ohsu.edu", password: "private-password" });
   const app = createApp({ core });
 
   const response = await app.handle({ method: "GET", path: "/health", headers: {} });
@@ -25,6 +25,6 @@ test("health reports availability without exposing club data", async () => {
   assert.equal(response.headers["Content-Type"], "application/json; charset=utf-8");
   assert.equal(response.headers["Cache-Control"], "no-store");
   assert.deepEqual(JSON.parse(response.body), { status: "ok" });
-  assert.equal(response.body.includes("private-member"), false);
+  assert.equal(response.body.includes("private-member@ohsu.edu"), false);
   assert.equal(response.body.includes("private-password"), false);
 });

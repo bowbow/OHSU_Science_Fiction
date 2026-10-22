@@ -4,7 +4,7 @@ import { openCore } from "../src/index.ts";
 
 function seedPasswordMember() {
   const core = openCore(":memory:");
-  const created = core.registerWithPassword({ username: "Ada", password: "Reader12" });
+  const created = core.registerWithPassword({ username: "Ada@ohsu.edu", password: "Reader12" });
   assert.equal(created.ok, true);
   if (!created.ok) {
     throw new Error("seed failed");
@@ -15,26 +15,26 @@ function seedPasswordMember() {
 
 test("a signed-out password member can sign in with any letter case", () => {
   const core = seedPasswordMember();
-  const signedIn = core.signInWithPassword({ username: " aDa ", password: "Reader12" });
+  const signedIn = core.signInWithPassword({ username: " aDa@OHSU.EDU ", password: "Reader12" });
   assert.equal(signedIn.ok, true);
   if (!signedIn.ok) {
     return;
   }
-  assert.equal(signedIn.member.username, "Ada");
+  assert.equal(signedIn.member.username, "Ada@ohsu.edu");
   assert.equal(core.currentMember(signedIn.sessionId)?.id, signedIn.member.id);
 });
 
 test("unknown username and wrong password return the same failure", () => {
   const core = seedPasswordMember();
   const unknown = core.signInWithPassword({ username: "Nobody", password: "Reader12" });
-  const wrong = core.signInWithPassword({ username: "Ada", password: "Wrong123" });
+  const wrong = core.signInWithPassword({ username: "Ada@ohsu.edu", password: "Wrong123" });
   assert.deepEqual(unknown, { ok: false, failure: { code: "invalid_credentials" } });
   assert.deepEqual(wrong, { ok: false, failure: { code: "invalid_credentials" } });
 });
 
 test("sign-out ends the session and the member must sign in again", () => {
   const core = seedPasswordMember();
-  const signedIn = core.signInWithPassword({ username: "Ada", password: "Reader12" });
+  const signedIn = core.signInWithPassword({ username: "Ada@ohsu.edu", password: "Reader12" });
   assert.equal(signedIn.ok, true);
   if (!signedIn.ok) {
     return;
@@ -45,7 +45,7 @@ test("sign-out ends the session and the member must sign in again", () => {
 
 test("a session stays open when its start time is in the past", () => {
   const core = seedPasswordMember();
-  const signedIn = core.signInWithPassword({ username: "Ada", password: "Reader12" });
+  const signedIn = core.signInWithPassword({ username: "Ada@ohsu.edu", password: "Reader12" });
   assert.equal(signedIn.ok, true);
   if (!signedIn.ok) {
     return;
@@ -58,13 +58,13 @@ test("a session stays open when its start time is in the past", () => {
     ended_at: string | null;
   };
   assert.equal(row.ended_at, null);
-  assert.equal(core.currentMember(signedIn.sessionId)?.username, "Ada");
+  assert.equal(core.currentMember(signedIn.sessionId)?.username, "Ada@ohsu.edu");
 });
 
 test("repeated wrong attempts stay immediate and do not lock the member", () => {
   const core = seedPasswordMember();
   for (let attempt = 0; attempt < 5; attempt += 1) {
-    const result = core.signInWithPassword({ username: "Ada", password: "Wrong123" });
+    const result = core.signInWithPassword({ username: "Ada@ohsu.edu", password: "Wrong123" });
     assert.deepEqual(result, { ok: false, failure: { code: "invalid_credentials" } });
   }
   const schema = core.db.prepare("SELECT sql FROM sqlite_master WHERE name = 'sessions' OR name = 'members'").all() as Array<{
@@ -72,5 +72,5 @@ test("repeated wrong attempts stay immediate and do not lock the member", () => 
   }>;
   const combined = schema.map((entry) => entry.sql).join("\n");
   assert.equal(/fail|lock|expir/i.test(combined), false);
-  assert.equal(core.signInWithPassword({ username: "Ada", password: "Reader12" }).ok, true);
+  assert.equal(core.signInWithPassword({ username: "Ada@ohsu.edu", password: "Reader12" }).ok, true);
 });

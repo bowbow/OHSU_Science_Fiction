@@ -16,7 +16,7 @@ test("signed-in users can submit feedback with a 1,000-word limit", async () => 
     method: "POST",
     path: "/register",
     headers: { "content-type": "application/x-www-form-urlencoded" },
-    body: "username=Ada&password=reader",
+    body: "username=Ada%40ohsu.edu&password=reader",
   });
   const cookie = registered.headers["Set-Cookie"]?.split(";")[0];
   assert.ok(cookie);
@@ -67,16 +67,16 @@ test("admins see newest-first feedback summaries and can expand the full text", 
   addTestAdmin(core);
   const app = createApp({ core });
 
-  const ada = await register(app, "Ada");
-  const bob = await register(app, "Bob");
+  const ada = await register(app, "Ada@ohsu.edu");
+  const bob = await register(app, "Bob@ohsu.edu");
   const longFeedback = Array.from({ length: 55 }, (_, index) => `word${index + 1}`).join(" ") + " <script>alert(1)</script>";
   await submit(app, ada, longFeedback);
   await submit(app, bob, "Latest feedback about the website.");
   core.db.prepare(
-    "UPDATE feedback_entries SET submitted_at = '2026-10-18T12:00:00.000Z' WHERE member_id = (SELECT id FROM members WHERE username = 'Ada')",
+    "UPDATE feedback_entries SET submitted_at = '2026-10-18T12:00:00.000Z' WHERE member_id = (SELECT id FROM members WHERE username = 'Ada@ohsu.edu')",
   ).run();
   core.db.prepare(
-    "UPDATE feedback_entries SET submitted_at = '2026-10-19T12:00:00.000Z' WHERE member_id = (SELECT id FROM members WHERE username = 'Bob')",
+    "UPDATE feedback_entries SET submitted_at = '2026-10-19T12:00:00.000Z' WHERE member_id = (SELECT id FROM members WHERE username = 'Bob@ohsu.edu')",
   ).run();
 
   const denied = await app.handle({ method: "GET", path: "/admin/feedback", headers: { cookie: ada } });
@@ -84,7 +84,7 @@ test("admins see newest-first feedback summaries and can expand the full text", 
   assert.equal(denied.body.includes("Latest feedback"), false);
 
   const feedbackId = (core.db.prepare(
-    "SELECT id FROM feedback_entries WHERE member_id = (SELECT id FROM members WHERE username = 'Bob')",
+    "SELECT id FROM feedback_entries WHERE member_id = (SELECT id FROM members WHERE username = 'Bob@ohsu.edu')",
   ).get() as { id: string }).id;
   const deniedSeen = await app.handle({
     method: "POST",
@@ -106,7 +106,7 @@ test("admins see newest-first feedback summaries and can expand the full text", 
 
   assert.match(page.body, /href="\/admin\/feedback" aria-current="page">View feedback/);
   assert.match(page.body, /<time datetime="2026-10-19T12:00:00.000Z">Oct 19, 2026<\/time>/);
-  assert.ok(page.body.indexOf("Bob") < page.body.indexOf("Ada"));
+  assert.ok(page.body.indexOf("Bob@ohsu.edu") < page.body.indexOf("Ada@ohsu.edu"));
   assert.match(page.body, /Latest feedback about the website\./);
   assert.match(page.body, new RegExp(escapeRegExp(feedbackSummary(longFeedback))));
   assert.match(page.body, new RegExp(`class="feedback-item is-unseen" data-feedback-id="${escapeRegExp(feedbackId)}"`));
