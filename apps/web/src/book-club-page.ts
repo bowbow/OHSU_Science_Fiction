@@ -536,6 +536,12 @@ function suggestionList(
           }
         });
       });
+      document.addEventListener("click", (event) => {
+        if (!(event.target instanceof Node)) return;
+        document.querySelectorAll(".book-information[open]").forEach((details) => {
+          if (!details.contains(event.target)) details.removeAttribute("open");
+        });
+      });
       document.addEventListener("keydown", (event) => {
         if (event.key === "Escape") {
           document.querySelectorAll(".book-information[open]").forEach((details) => details.removeAttribute("open"));

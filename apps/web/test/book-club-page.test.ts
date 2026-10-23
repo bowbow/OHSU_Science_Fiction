@@ -262,6 +262,7 @@ test("book information opens from the card and includes voting-relevant details"
   assert.match(dune, /href="https:\/\/books\.google\.com\/books\?id=dune-volume"/);
   assert.match(dune, /src="https:\/\/books\.google\.com\/books\/content\?id=dune-volume"/);
   assert.match(response.body, /document\.querySelectorAll\("\.book-information"\)/);
+  assert.match(response.body, /if \(!details\.contains\(event\.target\)\) details\.removeAttribute\("open"\)/);
 });
 
 test("members cast one vote, can move it, and the most votes are listed first", async () => {

@@ -380,32 +380,33 @@ export function page(options: {
     .book-information {
       position: absolute;
       z-index: 5;
-      top: 2.9rem;
-      right: 0.45rem;
-      width: 2rem;
-      height: 2rem;
+      top: 3rem;
+      right: 0.15rem;
+      width: 2.2rem;
+      height: 2.2rem;
       text-align: left;
     }
     .book-information > summary {
       display: grid;
       place-items: center;
-      width: 2rem;
-      height: 2rem;
+      width: 2.2rem;
+      height: 2.2rem;
       box-sizing: border-box;
       border: 1px solid var(--accent);
       border-radius: 50%;
-      color: var(--accent);
-      background: var(--surface);
-      box-shadow: 0 5px 14px rgba(36, 78, 139, 0.18);
+      color: white;
+      background: var(--accent);
+      box-shadow: 0 5px 16px rgba(36, 78, 139, 0.34), 0 0 0 3px rgba(255, 255, 255, 0.7);
       cursor: pointer;
       font-family: Georgia, serif;
-      font-size: 1.05rem;
-      font-weight: 700;
+      font-size: 1.15rem;
+      font-weight: 800;
       line-height: 1;
       list-style: none;
     }
     .book-information > summary::-webkit-details-marker { display: none; }
-    .book-information > summary:hover { color: white; background: var(--accent); }
+    .book-information > summary:hover { color: white; background: var(--accent-deep); transform: scale(1.08); }
+    .book-information[open] > summary { background: var(--accent-deep); }
     .book-information > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
     .book-information-drawer {
       position: absolute;
@@ -1343,24 +1344,32 @@ export function page(options: {
     html[data-variant="scifi"] .book-remove button.danger:hover,
     html[data-variant="scifi"] dialog.confirm button.danger:hover { color: white; background: rgba(159, 18, 57, 0.9); }
     html[data-variant="scifi"] .book-information {
-      top: 4.1rem;
-      right: 1.35rem;
+      top: 4rem;
+      right: 0.5rem;
     }
     html[data-variant="scifi"] .book-information > summary {
       border-radius: 0;
-      border-color: rgba(87, 222, 211, 0.78);
+      border-color: rgba(191, 255, 249, 0.98);
       clip-path: polygon(0.4rem 0, 100% 0, 100% calc(100% - 0.4rem), calc(100% - 0.4rem) 100%, 0 100%, 0 0.4rem);
-      color: var(--hud-teal);
-      background: rgba(3, 22, 27, 0.94);
-      box-shadow: 0 0 12px rgba(87, 222, 211, 0.25), inset 0 0 9px rgba(87, 222, 211, 0.08);
-      filter: drop-shadow(0 0 5px rgba(87, 222, 211, 0.26));
+      color: #021012;
+      background: linear-gradient(135deg, #bffff9 0%, var(--hud-teal) 50%, #3ea5d8 100%);
+      box-shadow: 0 0 18px rgba(87, 222, 211, 0.72), 0 0 34px rgba(83, 167, 255, 0.34), inset 0 0 8px rgba(255, 255, 255, 0.5);
+      filter: drop-shadow(0 0 7px rgba(87, 222, 211, 0.66));
       font-family: "Orbitron", sans-serif;
-      font-size: 0.8rem;
+      font-size: 1rem;
+      font-weight: 900;
+      text-shadow: 0 1px rgba(255, 255, 255, 0.55);
     }
     html[data-variant="scifi"] .book-information > summary:hover {
       color: #021012;
       background: var(--hud-teal);
       box-shadow: 0 0 18px rgba(87, 222, 211, 0.52);
+    }
+    html[data-variant="scifi"] .book-information[open] > summary {
+      color: #ffffff;
+      border-color: #9bceff;
+      background: var(--hud-blue);
+      box-shadow: 0 0 20px rgba(83, 167, 255, 0.78), 0 0 38px rgba(87, 222, 211, 0.34);
     }
     html[data-variant="scifi"] .book-information-drawer {
       border: 1px solid rgba(87, 222, 211, 0.7);
