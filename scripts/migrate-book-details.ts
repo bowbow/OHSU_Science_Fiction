@@ -7,8 +7,6 @@ const COLUMNS = [
   ["book_authors", "TEXT"],
   ["book_summary", "TEXT"],
   ["book_categories", "TEXT"],
-  ["book_average_rating", "REAL"],
-  ["book_ratings_count", "INTEGER"],
   ["book_info_url", "TEXT"],
   ["book_thumbnail_url", "TEXT"],
   ["book_details_checked", "INTEGER NOT NULL DEFAULT 0"],

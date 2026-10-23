@@ -11,8 +11,6 @@ const EXPECTED_COLUMNS = [
   "book_authors",
   "book_summary",
   "book_categories",
-  "book_average_rating",
-  "book_ratings_count",
   "book_info_url",
   "book_thumbnail_url",
   "book_details_checked",

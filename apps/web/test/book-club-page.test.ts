@@ -235,8 +235,6 @@ test("book information opens from the card and includes voting-relevant details"
       authors: "Frank Herbert",
       summary: "A young heir confronts <danger> on Arrakis.",
       categories: ["Science Fiction", "Political fiction"],
-      averageRating: 4.5,
-      ratingsCount: 321,
       infoUrl: "https://books.google.com/books?id=dune-volume",
       thumbnailUrl: "https://books.google.com/books/content?id=dune-volume",
     } : null,
@@ -258,7 +256,6 @@ test("book information opens from the card and includes voting-relevant details"
   assert.match(dune, /A young heir confronts &lt;danger&gt; on Arrakis\./);
   assert.match(dune, /Science Fiction/);
   assert.match(dune, /Political fiction/);
-  assert.match(dune, /<strong>4\.5 \/ 5<\/strong> on Google Books \(321 ratings\)/);
   assert.match(dune, /href="https:\/\/books\.google\.com\/books\?id=dune-volume"/);
   assert.match(dune, /src="https:\/\/books\.google\.com\/books\/content\?id=dune-volume"/);
   assert.match(response.body, /document\.querySelectorAll\("\.book-information"\)/);

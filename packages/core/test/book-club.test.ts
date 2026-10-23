@@ -262,8 +262,6 @@ test("book details are stored once and are deleted with the suggestion", async (
       authors: "Frank Herbert",
       summary: "A struggle for control of a desert world.",
       categories: ["Science Fiction", "Fiction / Political"],
-      averageRating: 4.5,
-      ratingsCount: 321,
       infoUrl: "https://books.google.com/books?id=google-dune",
       thumbnailUrl: "https://books.google.com/books/content?id=google-dune",
     };
@@ -281,8 +279,6 @@ test("book details are stored once and are deleted with the suggestion", async (
     authors: "Frank Herbert",
     summary: "A struggle for control of a desert world.",
     categories: ["Science Fiction", "Fiction / Political"],
-    averageRating: 4.5,
-    ratingsCount: 321,
     infoUrl: "https://books.google.com/books?id=google-dune",
   });
 
@@ -305,8 +301,6 @@ test("a failed book-details lookup is retried later", async () => {
     authors: "Octavia E. Butler",
     summary: "A modern woman is pulled into the antebellum past.",
     categories: ["Science Fiction"],
-    averageRating: null,
-    ratingsCount: null,
     infoUrl: null,
     thumbnailUrl: null,
   }));

@@ -25,8 +25,6 @@ test("Google Books details favor the requested book and keep the API key out of 
             authors: ["Frank Herbert"],
             description: "<p>A struggle for <strong>control</strong> of Arrakis.</p>",
             categories: ["Fiction / Science Fiction / General", "Fiction / Political"],
-            averageRating: 4.5,
-            ratingsCount: 321,
             infoLink: "http://books.google.com/books?id=dune",
             imageLinks: { thumbnail: "http://books.google.com/books/content?id=dune" },
           },
@@ -40,14 +38,16 @@ test("Google Books details favor the requested book and keep the API key out of 
   assert.ok(observedUrl);
   assert.equal(observedUrl.searchParams.has("key"), false);
   assert.equal(observedUrl.searchParams.get("q"), "Dune inauthor:Frank Herbert");
+  assert.equal(
+    observedUrl.searchParams.get("fields"),
+    "items(id,volumeInfo(title,authors,description,categories,infoLink,imageLinks(thumbnail,smallThumbnail)))",
+  );
   assert.equal(requestedKey, "secret-key");
   assert.deepEqual(details, {
     sourceId: "dune",
     authors: "Frank Herbert",
     summary: "A struggle for control of Arrakis.",
     categories: ["Fiction / Science Fiction / General", "Fiction / Political"],
-    averageRating: 4.5,
-    ratingsCount: 321,
     infoUrl: "https://books.google.com/books?id=dune",
     thumbnailUrl: "https://books.google.com/books/content?id=dune",
   });

@@ -51,8 +51,6 @@ type SuggestionRow = {
   book_authors: string | null;
   book_summary: string | null;
   book_categories: string | null;
-  book_average_rating: number | null;
-  book_ratings_count: number | null;
   book_info_url: string | null;
   book_thumbnail_url: string | null;
 };
@@ -78,7 +76,7 @@ export function bookClubRounds(db: DatabaseSync, sessionId: string | null | unde
   ).all() as RoundRow[];
   const suggestions = db.prepare(
     `SELECT s.id, s.title, s.cover_id, s.book_authors, s.book_summary,
-            s.book_categories, s.book_average_rating, s.book_ratings_count,
+            s.book_categories,
             s.book_info_url, s.book_thumbnail_url, m.username,
             COUNT(v.id) AS votes,
             SUM(CASE WHEN v.member_id = ? THEN 1 ELSE 0 END) AS voted_by_me
@@ -519,16 +517,13 @@ export async function ensureBookDetails(
     db.prepare(
       `UPDATE book_suggestions
        SET google_books_id = ?, book_authors = ?, book_summary = ?, book_categories = ?,
-           book_average_rating = ?, book_ratings_count = ?, book_info_url = ?,
-           book_thumbnail_url = ?, book_details_checked = 1
+           book_info_url = ?, book_thumbnail_url = ?, book_details_checked = 1
        WHERE id = ?`,
     ).run(
       details?.sourceId.trim() || null,
       authors || null,
       details?.summary?.trim() || null,
       categories,
-      details?.averageRating ?? null,
-      details?.ratingsCount ?? null,
       details?.infoUrl ?? null,
       details?.thumbnailUrl ?? null,
       row.id,
@@ -540,7 +535,7 @@ function detailsView(row: SuggestionRow): BookDetailsView | null {
   const categories = parseCategories(row.book_categories);
   if (
     !row.book_authors && !row.book_summary && categories.length === 0
-    && row.book_average_rating === null && row.book_info_url === null
+    && row.book_info_url === null
   ) {
     return null;
   }
@@ -548,8 +543,6 @@ function detailsView(row: SuggestionRow): BookDetailsView | null {
     authors: row.book_authors ?? "",
     summary: row.book_summary,
     categories,
-    averageRating: row.book_average_rating,
-    ratingsCount: row.book_ratings_count,
     infoUrl: row.book_info_url,
   };
 }

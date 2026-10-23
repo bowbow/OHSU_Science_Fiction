@@ -3,8 +3,6 @@ export type BookDetails = {
   authors: string;
   summary: string | null;
   categories: string[];
-  averageRating: number | null;
-  ratingsCount: number | null;
   infoUrl: string | null;
   thumbnailUrl: string | null;
 };

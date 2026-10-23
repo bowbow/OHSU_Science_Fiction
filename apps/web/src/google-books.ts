@@ -7,8 +7,6 @@ type GoogleVolume = {
     authors?: string[];
     description?: string;
     categories?: string[];
-    averageRating?: number;
-    ratingsCount?: number;
     infoLink?: string;
     imageLinks?: { thumbnail?: string; smallThumbnail?: string };
   };
@@ -54,8 +52,6 @@ export async function findGoogleBookDetails(
     authors: cleanStrings(info.authors).join(", "),
     summary: info.description ? plainText(info.description) || null : null,
     categories: cleanStrings(info.categories),
-    averageRating: validRating(info.averageRating),
-    ratingsCount: validCount(info.ratingsCount),
     infoUrl: safeGoogleUrl(info.infoLink),
     thumbnailUrl: safeGoogleUrl(info.imageLinks?.thumbnail ?? info.imageLinks?.smallThumbnail),
   };
@@ -73,6 +69,10 @@ async function search(
   url.searchParams.set("q", `${titleTerm}${authorTerm ? ` inauthor:${authorTerm}` : ""}`);
   url.searchParams.set("maxResults", "5");
   url.searchParams.set("printType", "books");
+  url.searchParams.set(
+    "fields",
+    "items(id,volumeInfo(title,authors,description,categories,infoLink,imageLinks(thumbnail,smallThumbnail)))",
+  );
   const response = await request(url, {
     headers: { "x-goog-api-key": apiKey },
     signal: AbortSignal.timeout(8000),
@@ -99,7 +99,6 @@ function ranked(volumes: GoogleVolume[], title: string, authors: string): Google
     if (wantedAuthors && foundAuthors.includes(wantedAuthors)) value += 35;
     if (info?.description) value += 12;
     if (cleanStrings(info?.categories).length > 0) value += 6;
-    if (validRating(info?.averageRating) !== null) value += 4;
     if (info?.imageLinks?.thumbnail || info?.imageLinks?.smallThumbnail) value += 2;
     return value;
   }
@@ -114,14 +113,6 @@ function cleanStrings(values: string[] | undefined): string[] {
 
 function normalized(value: string): string {
   return value.trim().replaceAll(/[^\p{L}\p{N}]+/gu, " ").toLocaleLowerCase();
-}
-
-function validRating(value: number | undefined): number | null {
-  return typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= 5 ? value : null;
-}
-
-function validCount(value: number | undefined): number | null {
-  return Number.isInteger(value) && value! >= 0 ? value! : null;
 }
 
 function safeGoogleUrl(value: string | undefined): string | null {

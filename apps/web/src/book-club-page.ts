@@ -566,9 +566,6 @@ function bookInformation(
   const categories = details.categories.length > 0
     ? `<div class="book-information-categories" aria-label="Genres">${details.categories.map((category) => `<span>${escapeHtml(category)}</span>`).join("")}</div>`
     : "";
-  const rating = details.averageRating === null
-    ? `<p class="book-information-rating">No reader rating is available from Google Books.</p>`
-    : `<p class="book-information-rating"><strong>${details.averageRating.toFixed(1)} / 5</strong> on Google Books${ratingCount(details.ratingsCount)}</p>`;
   const sourceUrl = safeBookInfoUrl(details.infoUrl);
   const source = sourceUrl
     ? `<p class="book-information-source"><a href="${escapeHtml(sourceUrl)}" target="_blank" rel="noreferrer">View on Google Books</a></p>`
@@ -579,16 +576,9 @@ function bookInformation(
       <h3>${escapedTitle}</h3>${authors}
       <h4>Story summary</h4>${summary}
       ${categories}
-      ${rating}${source}
+      ${source}
     </section>
   </details>`;
-}
-
-function ratingCount(count: number | null): string {
-  if (count === null) {
-    return "";
-  }
-  return ` (${count.toLocaleString("en-US")} ${count === 1 ? "rating" : "ratings"})`;
 }
 
 function safeBookInfoUrl(value: string | null): string | null {

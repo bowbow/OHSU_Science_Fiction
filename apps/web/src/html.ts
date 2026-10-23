@@ -432,7 +432,7 @@ export function page(options: {
     .book-information-drawer h3 { margin: 0; color: var(--ink); font-size: 1.05rem; line-height: 1.3; }
     .book-information-drawer h4 { margin: 1rem 0 0.35rem; color: var(--ink); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; }
     .book-information-drawer p { margin: 0.45rem 0; }
-    .book-information-authors, .book-information-unavailable, .book-information-rating { color: #526174; }
+    .book-information-authors, .book-information-unavailable { color: #526174; }
     .book-information-summary { white-space: pre-line; }
     .book-information-categories { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 0.85rem 0; }
     .book-information-categories span { padding: 0.2rem 0.48rem; border-radius: 999px; color: #244e8b; background: rgba(36, 78, 139, 0.09); font-size: 0.72rem; }
@@ -1386,8 +1386,7 @@ export function page(options: {
     html[data-variant="scifi"] .book-information-drawer h3 { color: #ffffff; font-family: "Orbitron", sans-serif; font-size: 0.9rem; }
     html[data-variant="scifi"] .book-information-drawer h4 { color: var(--hud-teal); font-family: "Orbitron", sans-serif; font-size: 0.64rem; }
     html[data-variant="scifi"] .book-information-authors,
-    html[data-variant="scifi"] .book-information-unavailable,
-    html[data-variant="scifi"] .book-information-rating { color: var(--hud-muted); }
+    html[data-variant="scifi"] .book-information-unavailable { color: var(--hud-muted); }
     html[data-variant="scifi"] .book-information-categories span {
       border: 1px solid rgba(83, 167, 255, 0.42);
       border-radius: 0;

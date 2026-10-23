@@ -10,7 +10,7 @@ Production baseline: `53a6352`
 
 ### Added
 
-- Added a prominent slide-out information control on each available book card with its Google Books story summary, genres, reader rating, source link, and cover fallback when available; clicking outside closes the drawer.
+- Added a prominent slide-out information control on each available book card with its Google Books story summary, genres, source link, and cover fallback when available; clicking outside closes the drawer.
 - Added secure local and production configuration plumbing for the Google Books integration.
 - Added a confirmation dialog before an administrator removes a book that already has one or more votes.
 - Added a full-width, notched sci-fi divider between the book tiles and the book-administration controls.
