@@ -20,6 +20,43 @@ automatic table creation and schema upgrades. Production sets this to `false` so
 application startup does not change the schema. Administrator accounts are never
 created automatically by application startup.
 
+### Google Books API configuration
+
+Use separate Google Books API keys for local development and production. In
+[Google Cloud Console](https://console.cloud.google.com/), enable the Google Books
+API, create an API key for each environment, and restrict both keys to the Google
+Books API. Where practical, also restrict each key to the public IP addresses that
+will use it. The production Elastic IP is available with:
+
+```powershell
+terraform -chdir=infra/aws output -raw elastic_ip
+```
+
+For local development, create the ignored file `.env.local` in the repository
+root:
+
+```dotenv
+GOOGLE_BOOKS_API_KEY=your-local-key
+```
+
+`npm run dev` and `npm start` load this file automatically. It is excluded from
+Git and from deployment archives.
+
+The production key is intentionally not supplied to Terraform because Terraform
+would then record the secret in its state. Create it manually as a Standard
+`SecureString` in AWS Systems Manager Parameter Store in `us-east-1`, using the
+default `aws/ssm` encryption key and this exact name:
+
+```text
+/bookclub-production/google-books-api-key
+```
+
+Terraform manages the supporting infrastructure, including a narrowly scoped
+`ssm:GetParameter` permission for only this parameter. During deployment, the EC2
+instance retrieves and decrypts the value directly and stores it in
+`/etc/bookclub-secrets.env`, owned by `root:bookclub` with mode `0640`. The API
+keys must never be written to logs, release archives, Git, or Terraform state.
+
 Download the production activity log through Systems Manager (no SSH required):
 
 ```powershell

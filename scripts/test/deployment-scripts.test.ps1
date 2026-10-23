@@ -6,6 +6,8 @@ $provision = Get-Content -LiteralPath (Join-Path $repoRoot "scripts/provision.ps
 $backup = Get-Content -LiteralPath (Join-Path $repoRoot "scripts/backup-database.sh") -Raw
 $restore = Get-Content -LiteralPath (Join-Path $repoRoot "scripts/restore-database.sh") -Raw
 $terraform = Get-Content -LiteralPath (Join-Path $repoRoot "infra/aws/main.tf") -Raw
+$userData = Get-Content -LiteralPath (Join-Path $repoRoot "infra/aws/user-data.sh") -Raw
+$package = Get-Content -LiteralPath (Join-Path $repoRoot "package.json") -Raw
 
 function Assert-Contains([string]$Text, [string]$Pattern, [string]$Message) {
   if ($Text -notmatch $Pattern) { throw $Message }
@@ -17,6 +19,7 @@ Assert-Contains $deploy "Get-FileHash.+SHA256" "Deployment must hash the release
 Assert-Contains $deploy "AWS-RunShellScript" "Deployment must use Systems Manager Run Command."
 Assert-Contains $deploy "get-caller-identity" "Deployment must verify the selected AWS profile."
 Assert-Contains $deploy 'Terraform-Output "backup_bucket"' "Deployment must read the backup bucket output."
+Assert-Contains $deploy 'Terraform-Output "google_books_api_key_parameter_name"' "Deployment must read the secret parameter name from Terraform."
 Assert-Contains $remote "/var/lib/bookclub/bookclub\.sqlite" "Remote deployment must not relocate the persistent database."
 Assert-Contains $remote "BOOKCLUB_INITIALIZE_DATABASE=false" "Production startup must not initialize or migrate the database."
 Assert-Contains $remote "Release archive contains a forbidden" "Remote deployment must reject unsafe archives."
@@ -24,6 +27,10 @@ Assert-Contains $remote "current\.rollback" "Remote deployment must retain rollb
 Assert-Contains $remote "backup-database\.sh.+pre-deploy" "Remote deployment must back up the database before activation."
 Assert-Contains $remote "migrate-feedback\.ts" "Remote deployment must run the explicit feedback migration."
 Assert-Contains $remote "bookclub-backup\.timer" "Remote deployment must install the weekly backup timer."
+Assert-Contains $remote "aws ssm get-parameter" "Remote deployment must retrieve the Google Books key from Parameter Store."
+Assert-Contains $remote "--with-decryption" "Remote deployment must decrypt the SecureString only on the instance."
+Assert-Contains $remote "bookclub-secrets\.env" "Remote deployment must keep secrets in a separate environment file."
+Assert-Contains $remote "chmod 0640 /etc/bookclub-secrets\.env\.new" "The production secret file must not be world-readable."
 Assert-Contains $backup "sqlite-backup\.ts" "Backups must use the consistent SQLite backup utility."
 Assert-Contains $backup "aws s3 cp" "Backups must upload to S3."
 Assert-Contains $restore "sqlite-backup\.ts.+verify" "Restores must verify SQLite integrity before replacement."
@@ -32,7 +39,11 @@ Assert-Contains $terraform 'aws_s3_bucket_public_access_block" "backups' "Backup
 Assert-Contains $terraform 'aws_s3_bucket_server_side_encryption_configuration" "backups' "Backup bucket must enable encryption."
 Assert-Contains $terraform 'aws_s3_bucket_versioning" "backups' "Backup bucket must enable versioning."
 Assert-Contains $terraform 'aws:SecureTransport' "Backup bucket must require TLS."
-Assert-Contains $terraform 'ignore_changes = \[ami\]' "Terraform must not replace the stateful instance when the latest AMI changes."
+Assert-Contains $terraform 'google_books_api_key_read' "Terraform must grant the instance narrowly scoped access to the API key."
+Assert-Contains $terraform 'Action\s+= \["ssm:GetParameter"\]' "The instance must receive only single-parameter read access."
+Assert-Contains $terraform 'ignore_changes = \[ami, user_data\]' "Terraform must not replace the stateful instance when the latest AMI or bootstrap changes."
+Assert-Contains $userData 'EnvironmentFile=-/etc/bookclub-secrets\.env' "New instances must load the optional secret environment file."
+Assert-Contains $package '--env-file-if-exists=\.env\.local' "Local start commands must load the ignored development environment file."
 Assert-Contains $provision '\[switch\]\$PlanOnly' "Provisioning must support review without apply."
 Assert-Contains $provision "get-caller-identity" "Provisioning must verify the selected AWS profile."
 

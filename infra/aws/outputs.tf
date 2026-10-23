@@ -27,3 +27,8 @@ output "aws_region" {
   description = "AWS region containing the BookClub environment."
   value       = var.aws_region
 }
+
+output "google_books_api_key_parameter_name" {
+  description = "Parameter Store name containing the production Google Books API key."
+  value       = local.google_books_api_key_parameter_name
+}

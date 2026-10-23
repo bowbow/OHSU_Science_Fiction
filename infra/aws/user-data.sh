@@ -41,6 +41,7 @@ User=bookclub
 Group=bookclub
 WorkingDirectory=/opt/bookclub/current
 EnvironmentFile=/etc/bookclub.env
+EnvironmentFile=-/etc/bookclub-secrets.env
 ExecStart=/usr/local/bin/node --experimental-strip-types apps/web/src/server.ts
 Restart=on-failure
 RestartSec=5

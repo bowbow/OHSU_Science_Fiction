@@ -75,6 +75,7 @@ try {
   $bucket = Terraform-Output "release_bucket"
   $backupBucket = Terraform-Output "backup_bucket"
   $siteUrl = Terraform-Output "site_url"
+  $googleBooksParameter = Terraform-Output "google_books_api_key_parameter_name"
 
   $savedErrorPreference = $ErrorActionPreference
   $ErrorActionPreference = "SilentlyContinue"
@@ -126,7 +127,7 @@ try {
     "tar -xOf '$remoteWork/release.tar.gz' './scripts/remote-deploy.sh' > '$remoteWork/remote-deploy.sh'",
     "chmod 0700 '$remoteWork/remote-deploy.sh'",
     "bash -n '$remoteWork/remote-deploy.sh'",
-    "bash '$remoteWork/remote-deploy.sh' '$remoteWork/release.tar.gz' '$releaseId' '$hash' '$siteUrl' '$backupBucket'"
+    "bash '$remoteWork/remote-deploy.sh' '$remoteWork/release.tar.gz' '$releaseId' '$hash' '$siteUrl' '$backupBucket' '$googleBooksParameter'"
   )
   $commandInput = @{
     DocumentName = "AWS-RunShellScript"

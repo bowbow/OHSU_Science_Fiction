@@ -21,9 +21,10 @@ data "aws_ssm_parameter" "amazon_linux_2023" {
 }
 
 locals {
-  name_prefix        = var.environment_name
-  bucket_name        = "${var.environment_name}-releases-${data.aws_caller_identity.current.account_id}-${var.aws_region}"
-  backup_bucket_name = "${var.environment_name}-backups-${data.aws_caller_identity.current.account_id}-${var.aws_region}"
+  name_prefix                         = var.environment_name
+  bucket_name                         = "${var.environment_name}-releases-${data.aws_caller_identity.current.account_id}-${var.aws_region}"
+  backup_bucket_name                  = "${var.environment_name}-backups-${data.aws_caller_identity.current.account_id}-${var.aws_region}"
+  google_books_api_key_parameter_name = "/${var.environment_name}/google-books-api-key"
 }
 
 resource "aws_security_group" "bookclub" {
@@ -227,6 +228,20 @@ resource "aws_iam_role_policy" "database_backups" {
         Resource = "${aws_s3_bucket.backups.arn}/database/*"
       }
     ]
+  })
+}
+
+resource "aws_iam_role_policy" "google_books_api_key_read" {
+  name = "read-google-books-api-key"
+  role = aws_iam_role.bookclub.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = ["ssm:GetParameter"]
+      Resource = "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/${var.environment_name}/google-books-api-key"
+    }]
   })
 }
 

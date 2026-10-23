@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [[ "$#" -ne 5 ]]; then
-  echo "usage: remote-deploy.sh <archive> <release-id> <sha256> <public-url> <backup-bucket>" >&2
+if [[ "$#" -ne 6 ]]; then
+  echo "usage: remote-deploy.sh <archive> <release-id> <sha256> <public-url> <backup-bucket> <google-books-parameter>" >&2
   exit 64
 fi
 
@@ -11,6 +11,7 @@ release_id="$2"
 expected_hash="$3"
 public_url="$4"
 backup_bucket="$5"
+google_books_parameter="$6"
 
 if [[ ! "$release_id" =~ ^[A-Za-z0-9._-]+$ ]]; then
   echo "Invalid release id." >&2
@@ -19,6 +20,11 @@ fi
 
 if [[ ! "$backup_bucket" =~ ^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$ ]]; then
   echo "Invalid backup bucket name." >&2
+  exit 65
+fi
+
+if [[ ! "$google_books_parameter" =~ ^/[A-Za-z0-9_.-]+(/[A-Za-z0-9_.-]+)*$ ]]; then
+  echo "Invalid Google Books parameter name." >&2
   exit 65
 fi
 
@@ -56,6 +62,23 @@ cd "$staging_path"
 /usr/local/bin/npm ci --omit=dev --ignore-scripts
 chown -R bookclub:bookclub "$staging_path"
 
+google_books_api_key="$(aws ssm get-parameter \
+  --region "${AWS_REGION:-us-east-1}" \
+  --name "$google_books_parameter" \
+  --with-decryption \
+  --query 'Parameter.Value' \
+  --output text)"
+if [[ -z "$google_books_api_key" || "$google_books_api_key" == "None" || "$google_books_api_key" == *$'\n'* ]]; then
+  echo "Google Books API key could not be loaded from Parameter Store." >&2
+  exit 68
+fi
+umask 0077
+printf 'GOOGLE_BOOKS_API_KEY=%s\n' "$google_books_api_key" >/etc/bookclub-secrets.env.new
+chown root:bookclub /etc/bookclub-secrets.env.new
+chmod 0640 /etc/bookclub-secrets.env.new
+mv -f /etc/bookclub-secrets.env.new /etc/bookclub-secrets.env
+unset google_books_api_key
+
 install -d -o bookclub -g bookclub -m 0700 /var/lib/bookclub/backups
 runuser -u bookclub -- env \
   BACKUP_BUCKET="$backup_bucket" \
@@ -80,6 +103,12 @@ BOOKCLUB_SQLITE_PATH=/var/lib/bookclub/bookclub.sqlite
 BOOKCLUB_INITIALIZE_DATABASE=false
 EOF
 chmod 0644 /etc/bookclub.env
+
+install -d -m 0755 /etc/systemd/system/bookclub.service.d
+cat >/etc/systemd/system/bookclub.service.d/20-google-books.conf <<'EOF'
+[Service]
+EnvironmentFile=/etc/bookclub-secrets.env
+EOF
 
 cat >/etc/bookclub-backup.env <<EOF
 BACKUP_BUCKET=${backup_bucket}

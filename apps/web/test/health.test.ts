@@ -14,6 +14,11 @@ test("database initialization is configurable and defaults on locally", () => {
   );
 });
 
+test("the Google Books key is optional configuration", () => {
+  assert.equal(loadConfig({}).googleBooksApiKey, null);
+  assert.equal(loadConfig({ GOOGLE_BOOKS_API_KEY: "  local-test-key  " }).googleBooksApiKey, "local-test-key");
+});
+
 test("health reports availability without exposing club data", async () => {
   const core = openCore(":memory:");
   core.registerWithPassword({ username: "private-member@ohsu.edu", password: "private-password" });
