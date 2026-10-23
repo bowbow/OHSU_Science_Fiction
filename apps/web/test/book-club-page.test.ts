@@ -228,16 +228,23 @@ test("a found cover is shown and a missing cover stays text", async () => {
 });
 
 test("book information opens from the card and includes voting-relevant details", async () => {
+  let requestedEdition = "";
   const app = createApp({
     core: coreWithAdmin(),
-    details: async (title) => title === "Dune" ? {
+    matches: async (title) => title === "Dune"
+      ? [{ title: "Dune", authors: "Frank Herbert", year: 1965, coverId: 42, editionKey: "OL42M", workKey: "/works/OL42W", isbns: ["9780441172719"] }]
+      : [],
+    details: async (title, _authors, editionKey) => {
+      requestedEdition = editionKey ?? "";
+      return title === "Dune" ? {
       sourceId: "dune-volume",
       authors: "Frank Herbert",
       summary: "A young heir confronts <danger> on Arrakis.",
       categories: ["Science Fiction", "Political fiction"],
       infoUrl: "https://books.google.com/books?id=dune-volume",
       thumbnailUrl: "https://books.google.com/books/content?id=dune-volume",
-    } : null,
+      } : null;
+    },
   });
   const admin = await signIn(app, "bow", "admin");
   await app.handle({ method: "POST", path: "/book-club/open", headers: { cookie: admin } });
@@ -250,6 +257,7 @@ test("book information opens from the card and includes voting-relevant details"
 
   const response = await app.handle({ method: "GET", path: "/book-club", headers: { cookie: admin } });
   const dune = item(response.body, "Dune");
+  assert.equal(requestedEdition, "OL42M");
   assert.match(dune, /<details class="book-information">/);
   assert.match(dune, /aria-label="Show information about Dune"/);
   assert.match(dune, /<h4>Story summary<\/h4>/);
@@ -257,7 +265,8 @@ test("book information opens from the card and includes voting-relevant details"
   assert.match(dune, /Science Fiction/);
   assert.match(dune, /Political fiction/);
   assert.match(dune, /href="https:\/\/books\.google\.com\/books\?id=dune-volume"/);
-  assert.match(dune, /src="https:\/\/books\.google\.com\/books\/content\?id=dune-volume"/);
+  assert.match(dune, /src="https:\/\/covers\.openlibrary\.org\/b\/id\/42-M\.jpg"/);
+  assert.equal(dune.includes("books.google.com/books/content"), false);
   assert.match(response.body, /document\.querySelectorAll\("\.book-information"\)/);
   assert.match(response.body, /if \(!details\.contains\(event\.target\)\) details\.removeAttribute\("open"\)/);
 });
@@ -494,12 +503,12 @@ test("several matching books ask which one to add", async () => {
     matches: async (title) => {
       if (title === "Born to Run") {
         return [
-          { title: "Born to Run", authors: "Bruce Springsteen", year: 1975, coverId: 1 },
-          { title: "Born to Run", authors: "Christopher McDougall", year: 2009, coverId: 2 },
+          { title: "Born to Run", authors: "Bruce Springsteen", year: 1975, coverId: 1, editionKey: "OL1M", workKey: "/works/OL1W", isbns: ["9781501141515"] },
+          { title: "Born to Run", authors: "Christopher McDougall", year: 2009, coverId: 2, editionKey: "OL2M", workKey: "/works/OL2W", isbns: ["9780307279187"] },
         ];
       }
       if (title === "Dune") {
-        return [{ title: "Dune", authors: "Frank Herbert", year: 1965, coverId: 5 }];
+        return [{ title: "Dune", authors: "Frank Herbert", year: 1965, coverId: 5, editionKey: "OL5M", workKey: "/works/OL5W", isbns: ["9780441172719"] }];
       }
       return [];
     },

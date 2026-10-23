@@ -48,6 +48,8 @@ type SuggestionRow = {
   votes: number;
   voted_by_me: number;
   cover_id: number | null;
+  open_library_edition_key: string | null;
+  open_library_work_key: string | null;
   book_authors: string | null;
   book_summary: string | null;
   book_categories: string | null;
@@ -75,7 +77,7 @@ export function bookClubRounds(db: DatabaseSync, sessionId: string | null | unde
      LIMIT 1`,
   ).all() as RoundRow[];
   const suggestions = db.prepare(
-    `SELECT s.id, s.title, s.cover_id, s.book_authors, s.book_summary,
+    `SELECT s.id, s.title, s.cover_id, s.open_library_edition_key, s.open_library_work_key, s.book_authors, s.book_summary,
             s.book_categories,
             s.book_info_url, s.book_thumbnail_url, m.username,
             COUNT(v.id) AS votes,
@@ -270,21 +272,27 @@ export async function suggestMatchedBook(
   if (requested !== null && !chosen) {
     return actionFailure({ code: "match_not_offered" });
   }
+  const selectedTitle = chosen?.title || title;
   try {
     db.prepare(
       `INSERT INTO book_suggestions (
         id, book_club_id, title, title_normalized, suggested_by, suggested_at,
-        cover_id, cover_checked, book_authors
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)`,
+        cover_id, cover_checked, open_library_edition_key, open_library_work_key,
+        open_library_isbns, book_authors, book_details_checked
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?)`,
     ).run(
       randomUUID(),
       open.id,
-      title,
-      normalizeTitle(title),
+      selectedTitle,
+      normalizeTitle(selectedTitle),
       member.id,
       new Date().toISOString(),
       chosen?.coverId ?? null,
+      chosen?.editionKey ?? null,
+      chosen?.workKey ?? null,
+      chosen ? JSON.stringify(cleanIsbns(chosen.isbns)) : null,
       chosen?.authors || null,
+      chosen && (chosen.editionKey || (chosen.workKey && chosen.isbns.length > 0)) ? 0 : 1,
     );
   } catch (error) {
     if (isUniqueConstraint(error)) {
@@ -292,7 +300,7 @@ export async function suggestMatchedBook(
     }
     throw error;
   }
-  return { ok: true, value: { title } };
+  return { ok: true, value: { title: selectedTitle } };
 }
 
 function usableMatches(books: CatalogBook[]): CatalogBook[] {
@@ -308,6 +316,9 @@ function usableMatches(books: CatalogBook[]): CatalogBook[] {
       authors: book.authors.trim(),
       year: Number.isInteger(book.year) ? book.year : null,
       coverId: book.coverId,
+      editionKey: /^OL\d+M$/.test(book.editionKey ?? "") ? book.editionKey : null,
+      workKey: /^\/works\/OL\d+W$/.test(book.workKey ?? "") ? book.workKey : null,
+      isbns: cleanIsbns(book.isbns),
     });
   }
   return usable;
@@ -495,20 +506,32 @@ export async function ensureBookCovers(
 export async function ensureBookDetails(
   db: DatabaseSync,
   sessionId: string | null | undefined,
-  lookup: (title: string, authors: string) => Promise<BookDetails | null>,
+  lookup: (title: string, authors: string, editionKey: string | null, workIsbns: string[]) => Promise<BookDetails | null>,
 ): Promise<void> {
   if (!currentMember(db, sessionId)) {
     return;
   }
   const pending = db.prepare(
-    `SELECT id, title, book_authors
+    `SELECT id, title, book_authors, open_library_edition_key, open_library_isbns
      FROM book_suggestions
-     WHERE book_details_checked = 0`,
-  ).all() as { id: string; title: string; book_authors: string | null }[];
+     WHERE book_details_checked = 0
+       AND (open_library_edition_key IS NOT NULL OR open_library_isbns IS NOT NULL)`,
+  ).all() as {
+    id: string;
+    title: string;
+    book_authors: string | null;
+    open_library_edition_key: string | null;
+    open_library_isbns: string | null;
+  }[];
   for (const row of pending) {
     let details: BookDetails | null;
     try {
-      details = await lookup(row.title, row.book_authors ?? "");
+      details = await lookup(
+        row.title,
+        row.book_authors ?? "",
+        row.open_library_edition_key,
+        parseIsbns(row.open_library_isbns),
+      );
     } catch {
       continue;
     }
@@ -532,6 +555,9 @@ export async function ensureBookDetails(
 }
 
 function detailsView(row: SuggestionRow): BookDetailsView | null {
+  if (!row.open_library_edition_key && !row.open_library_work_key) {
+    return null;
+  }
   const categories = parseCategories(row.book_categories);
   if (
     !row.book_authors && !row.book_summary && categories.length === 0
@@ -549,6 +575,23 @@ function detailsView(row: SuggestionRow): BookDetailsView | null {
 
 function cleanCategories(categories: string[]): string[] {
   return [...new Set(categories.map((category) => category.trim()).filter(Boolean))].slice(0, 8);
+}
+
+function cleanIsbns(isbns: string[]): string[] {
+  const values = isbns
+    .map((isbn) => isbn.replaceAll(/[^0-9X]/gi, "").toUpperCase())
+    .filter((isbn) => /^(?:\d{13}|\d{9}[\dX])$/.test(isbn));
+  return [...new Set(values)].slice(0, 500);
+}
+
+function parseIsbns(value: string | null): string[] {
+  if (!value) return [];
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? cleanIsbns(parsed.filter((item): item is string => typeof item === "string")) : [];
+  } catch {
+    return [];
+  }
 }
 
 function parseCategories(value: string | null): string[] {

@@ -251,12 +251,25 @@ test("a cover is stored when found, and a missing cover stays text", async () =>
 test("book details are stored once and are deleted with the suggestion", async () => {
   const { core, adminId, regularId } = adminSession();
   assert.equal(core.openBookClub(adminId).ok, true);
-  assert.equal(core.suggestBook({ sessionId: adminId, title: "Dune" }).ok, true);
+  assert.equal((await core.suggestMatchedBook(
+    { sessionId: adminId, title: "Dune" },
+    async () => [{
+      title: "Dune",
+      authors: "Frank Herbert",
+      year: 1965,
+      coverId: 42,
+      editionKey: "OL42M",
+      workKey: "/works/OL42W",
+      isbns: ["9780441172719"],
+    }],
+  )).ok, true);
   let lookups = 0;
-  await core.ensureBookDetails(regularId, async (title, authors) => {
+  await core.ensureBookDetails(regularId, async (title, authors, editionKey, workIsbns) => {
     lookups += 1;
     assert.equal(title, "Dune");
-    assert.equal(authors, "");
+    assert.equal(authors, "Frank Herbert");
+    assert.equal(editionKey, "OL42M");
+    assert.deepEqual(workIsbns, ["9780441172719"]);
     return {
       sourceId: "google-dune",
       authors: "Frank Herbert",
@@ -291,11 +304,22 @@ test("book details are stored once and are deleted with the suggestion", async (
 test("a failed book-details lookup is retried later", async () => {
   const { core, adminId } = adminSession();
   assert.equal(core.openBookClub(adminId).ok, true);
-  assert.equal(core.suggestBook({ sessionId: adminId, title: "Kindred" }).ok, true);
+  assert.equal((await core.suggestMatchedBook(
+    { sessionId: adminId, title: "Kindred" },
+    async () => [{
+      title: "Kindred",
+      authors: "Octavia E. Butler",
+      year: 1979,
+      coverId: 7,
+      editionKey: "OL7M",
+      workKey: "/works/OL7W",
+      isbns: ["9780807083697"],
+    }],
+  )).ok, true);
   await core.ensureBookDetails(adminId, async () => {
     throw new Error("offline");
   });
-  assert.equal(suggestions(core, adminId)[0]?.details, null);
+  assert.equal(suggestions(core, adminId)[0]?.details?.summary, null);
   await core.ensureBookDetails(adminId, async () => ({
     sourceId: "kindred",
     authors: "Octavia E. Butler",
@@ -305,6 +329,18 @@ test("a failed book-details lookup is retried later", async () => {
     thumbnailUrl: null,
   }));
   assert.equal(suggestions(core, adminId)[0]?.details?.authors, "Octavia E. Butler");
+});
+
+test("legacy details without an Open Library identity are not shown", () => {
+  const { core, adminId } = adminSession();
+  assert.equal(core.openBookClub(adminId).ok, true);
+  assert.equal(core.suggestBook({ sessionId: adminId, title: "Dune" }).ok, true);
+  core.db.prepare(
+    `UPDATE book_suggestions
+     SET google_books_id = 'unverified', book_authors = 'Wrong Author',
+         book_summary = 'Wrong story', book_details_checked = 1`,
+  ).run();
+  assert.equal(suggestions(core, adminId)[0]?.details, null);
 });
 
 test("closing the call selects the book with the most votes", () => {
@@ -432,8 +468,8 @@ test("several matching books wait for a choice, and one match is saved immediate
   const { core, adminId, regularId } = adminSession();
   assert.equal(core.openBookClub(adminId).ok, true);
   const several = [
-    { title: "Born to Run", authors: "Bruce Springsteen", year: 1975, coverId: 1 },
-    { title: "Born to Run", authors: "Christopher McDougall", year: 2009, coverId: 2 },
+    { title: "Born to Run", authors: "Bruce Springsteen", year: 1975, coverId: 1, editionKey: "OL1M", workKey: "/works/OL1W", isbns: ["9781501141515"] },
+    { title: "Born to Run", authors: "Christopher McDougall", year: 2009, coverId: 2, editionKey: "OL2M", workKey: "/works/OL2W", isbns: ["9780307279187"] },
   ];
   assert.deepEqual(
     await core.suggestMatchedBook({ sessionId: regularId, title: "Born to Run" }, async () => several),
@@ -470,7 +506,7 @@ test("several matching books wait for a choice, and one match is saved immediate
 
   const only = await core.suggestMatchedBook(
     { sessionId: adminId, title: "Dune" },
-    async () => [{ title: "Dune", authors: "Frank Herbert", year: 1965, coverId: 5 }],
+    async () => [{ title: "Dune", authors: "Frank Herbert", year: 1965, coverId: 5, editionKey: "OL5M", workKey: "/works/OL5W", isbns: ["9780441172719"] }],
   );
   assert.equal(only.ok, true);
   assert.equal(suggestions(core, regularId).find((item) => item.title === "Dune")?.coverId, 5);

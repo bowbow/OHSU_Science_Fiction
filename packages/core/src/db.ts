@@ -39,6 +39,9 @@ CREATE TABLE IF NOT EXISTS book_suggestions (
   suggested_at TEXT NOT NULL,
   cover_id INTEGER,
   cover_checked INTEGER NOT NULL DEFAULT 0,
+  open_library_edition_key TEXT,
+  open_library_work_key TEXT,
+  open_library_isbns TEXT,
   google_books_id TEXT,
   book_authors TEXT,
   book_summary TEXT,
@@ -137,6 +140,9 @@ function ensureBookDetailColumns(db: DatabaseSync): void {
     return;
   }
   const additions = [
+    ["open_library_edition_key", "TEXT"],
+    ["open_library_work_key", "TEXT"],
+    ["open_library_isbns", "TEXT"],
     ["google_books_id", "TEXT"],
     ["book_authors", "TEXT"],
     ["book_summary", "TEXT"],

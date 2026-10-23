@@ -7,6 +7,7 @@ type GoogleVolume = {
     authors?: string[];
     description?: string;
     categories?: string[];
+    industryIdentifiers?: { type?: string; identifier?: string }[];
     infoLink?: string;
     imageLinks?: { thumbnail?: string; smallThumbnail?: string };
   };
@@ -17,31 +18,47 @@ type GoogleVolumesResponse = { items?: GoogleVolume[] };
 export function createGoogleBooksLookup(
   apiKey: string,
   request: typeof fetch = fetch,
-): (title: string, authors: string) => Promise<BookDetails | null> {
+): (title: string, authors: string, editionIsbn: string | null, workIsbns: string[]) => Promise<BookDetails | null> {
   const key = apiKey.trim();
   if (!key) {
     throw new Error("A Google Books API key is required.");
   }
-  return (title, authors) => findGoogleBookDetails(title, authors, key, request);
+  return (title, authors, editionIsbn, workIsbns) => findGoogleBookDetails(
+    title,
+    authors,
+    editionIsbn,
+    workIsbns,
+    key,
+    request,
+  );
 }
 
 export async function findGoogleBookDetails(
   title: string,
   authors: string,
+  editionIsbn: string | null,
+  workIsbns: string[],
   apiKey: string,
   request: typeof fetch = fetch,
 ): Promise<BookDetails | null> {
-  const cleanTitle = title.trim().replaceAll(/\s+/g, " ");
-  const cleanAuthors = authors.trim().replaceAll(/\s+/g, " ");
-  if (!cleanTitle) {
+  const exactIsbn = editionIsbn ? normalizedIsbn(editionIsbn) : null;
+  const allowedIsbns = new Set(
+    [exactIsbn, ...workIsbns.map(normalizedIsbn)].filter((isbn): isbn is string => isbn !== null),
+  );
+  if (allowedIsbns.size === 0) {
     return null;
   }
 
-  let volumes = await search(cleanTitle, cleanAuthors, apiKey, request);
-  if (volumes.length === 0 && cleanAuthors) {
-    volumes = await search(cleanTitle, "", apiKey, request);
+  let volumes = exactIsbn ? await search(`isbn:${exactIsbn}`, 5, apiKey, request) : [];
+  let chosen = bestAllowedVolume(volumes, allowedIsbns);
+  if (!chosen) {
+    const cleanTitle = title.trim().replaceAll('"', " ");
+    const cleanAuthors = authors.trim().replaceAll('"', " ");
+    if (!cleanTitle) return null;
+    const query = `${cleanTitle}${cleanAuthors ? ` inauthor:${cleanAuthors}` : ""}`;
+    volumes = await search(query, 10, apiKey, request);
+    chosen = bestAllowedVolume(volumes, allowedIsbns);
   }
-  const chosen = ranked(volumes, cleanTitle, cleanAuthors)[0];
   const info = chosen?.volumeInfo;
   if (!chosen?.id || !info) {
     return null;
@@ -58,20 +75,18 @@ export async function findGoogleBookDetails(
 }
 
 async function search(
-  title: string,
-  authors: string,
+  query: string,
+  maxResults: number,
   apiKey: string,
   request: typeof fetch,
 ): Promise<GoogleVolume[]> {
   const url = new URL("https://www.googleapis.com/books/v1/volumes");
-  const titleTerm = title.replaceAll('"', " ");
-  const authorTerm = authors.replaceAll('"', " ");
-  url.searchParams.set("q", `${titleTerm}${authorTerm ? ` inauthor:${authorTerm}` : ""}`);
-  url.searchParams.set("maxResults", "5");
+  url.searchParams.set("q", query);
+  url.searchParams.set("maxResults", String(maxResults));
   url.searchParams.set("printType", "books");
   url.searchParams.set(
     "fields",
-    "items(id,volumeInfo(title,authors,description,categories,infoLink,imageLinks(thumbnail,smallThumbnail)))",
+    "items(id,volumeInfo(title,authors,description,categories,industryIdentifiers(type,identifier),infoLink,imageLinks(thumbnail,smallThumbnail)))",
   );
   const response = await request(url, {
     headers: { "x-goog-api-key": apiKey },
@@ -84,26 +99,6 @@ async function search(
   return Array.isArray(body.items) ? body.items : [];
 }
 
-function ranked(volumes: GoogleVolume[], title: string, authors: string): GoogleVolume[] {
-  const wantedTitle = normalized(title);
-  const wantedAuthors = normalized(authors);
-  return [...volumes].sort((left, right) => score(right) - score(left));
-
-  function score(volume: GoogleVolume): number {
-    const info = volume.volumeInfo;
-    const foundTitle = normalized(info?.title ?? "");
-    const foundAuthors = normalized(cleanStrings(info?.authors).join(" "));
-    let value = foundTitle === wantedTitle
-      ? 100
-      : foundTitle && (foundTitle.includes(wantedTitle) || wantedTitle.includes(foundTitle)) ? 45 : 0;
-    if (wantedAuthors && foundAuthors.includes(wantedAuthors)) value += 35;
-    if (info?.description) value += 12;
-    if (cleanStrings(info?.categories).length > 0) value += 6;
-    if (info?.imageLinks?.thumbnail || info?.imageLinks?.smallThumbnail) value += 2;
-    return value;
-  }
-}
-
 function cleanStrings(values: string[] | undefined): string[] {
   if (!Array.isArray(values)) {
     return [];
@@ -111,8 +106,23 @@ function cleanStrings(values: string[] | undefined): string[] {
   return [...new Set(values.map((value) => value.trim().replaceAll(/\s+/g, " ")).filter(Boolean))];
 }
 
-function normalized(value: string): string {
-  return value.trim().replaceAll(/[^\p{L}\p{N}]+/gu, " ").toLocaleLowerCase();
+function volumeHasAllowedIsbn(volume: GoogleVolume, allowedIsbns: Set<string>): boolean {
+  return (volume.volumeInfo?.industryIdentifiers ?? [])
+    .some((identifier) => {
+      const isbn = normalizedIsbn(identifier.identifier ?? "");
+      return isbn !== null && allowedIsbns.has(isbn);
+    });
+}
+
+function bestAllowedVolume(volumes: GoogleVolume[], allowedIsbns: Set<string>): GoogleVolume | undefined {
+  return volumes
+    .filter((volume) => volumeHasAllowedIsbn(volume, allowedIsbns))
+    .sort((left, right) => Number(Boolean(right.volumeInfo?.description)) - Number(Boolean(left.volumeInfo?.description)))[0];
+}
+
+function normalizedIsbn(value: string): string | null {
+  const isbn = value.replaceAll(/[^0-9X]/gi, "").toUpperCase();
+  return /^(?:\d{13}|\d{9}[\dX])$/.test(isbn) ? isbn : null;
 }
 
 function safeGoogleUrl(value: string | undefined): string | null {

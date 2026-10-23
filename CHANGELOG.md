@@ -17,6 +17,7 @@ Production baseline: `53a6352`
 
 ### Changed
 
+- Kept the exact Open Library cover selected by an administrator and restricted Google Books details to editions whose ISBN Open Library assigns to that same work; unverified legacy details are no longer shown.
 - Replaced the administrator's inline **Remove** button with an angular **X** in the upper-right corner of each book tile, reducing the chance of accidentally selecting it instead of **View voters**.
 - Reduced the vertical space between the vote control and **View voters**.
 - Made text-only book tiles the same size as tiles with cover images and gave both types the same floating animation.

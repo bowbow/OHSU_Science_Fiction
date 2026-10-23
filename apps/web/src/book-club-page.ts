@@ -501,7 +501,9 @@ function suggestionList(
     if (suggestion.coverId === null && googleCover === null) {
       return `<li class="book" title="Suggested by ${suggestedBy}"><div class="book-float-group cover-float"><div class="book-stack">${votes}${remove}${information}<span class="book-title">${title}</span>${actions}</div>${voters}</div></li>`;
     }
-    const coverSource = googleCover ?? `https://covers.openlibrary.org/b/id/${suggestion.coverId}-M.jpg`;
+    const coverSource = suggestion.coverId === null
+      ? googleCover!
+      : `https://covers.openlibrary.org/b/id/${suggestion.coverId}-M.jpg`;
     const cover = `<img class="cover" alt="${title}" src="${escapeHtml(coverSource)}" onerror="var card=this.closest('li');var name=card.querySelector('.book-title');if(name)name.hidden=false;this.remove()">`;
     return `<li class="book" title="Suggested by ${suggestedBy}"><div class="book-float-group cover-float"><div class="book-stack">${votes}${remove}${information}${cover}<span class="book-title" hidden>${title}</span>${actions}</div>${voters}</div></li>`;
   }).join("");

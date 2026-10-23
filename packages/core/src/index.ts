@@ -1,6 +1,6 @@
 import type { DatabaseSync } from "node:sqlite";
 import { bookClubRounds as bookClubRoundsFn, closeBookClub as closeBookClubFn, ensureBookCovers as ensureBookCoversFn, ensureBookDetails as ensureBookDetailsFn, openBookClub as openBookClubFn, removeBookSuggestion as removeBookSuggestionFn, startOver as startOverFn, suggestBook as suggestBookFn, suggestMatchedBook as suggestMatchedBookFn, voteForBook as voteForBookFn } from "./book-club.ts";
-export { findOpenLibraryBooks, findOpenLibraryCoverId } from "./covers.ts";
+export { findOpenLibraryBooks, findOpenLibraryCoverId, findOpenLibraryEditionIsbn } from "./covers.ts";
 export type { CatalogBook } from "./covers.ts";
 export type { BookDetails, BookDetailsView } from "./book-details.ts";
 import { proposeMeetingTime as proposeMeetingTimeFn, removeMeetingTime as removeMeetingTimeFn, selectMeetingTime as selectMeetingTimeFn, voteForMeetingTime as voteForMeetingTimeFn, withdrawMeetingVote as withdrawMeetingVoteFn } from "./meeting.ts";
@@ -102,7 +102,12 @@ export class Core {
 
   ensureBookDetails(
     sessionId: string | null | undefined,
-    lookup: (title: string, authors: string) => Promise<import("./book-details.ts").BookDetails | null>,
+    lookup: (
+      title: string,
+      authors: string,
+      editionKey: string | null,
+      workIsbns: string[],
+    ) => Promise<import("./book-details.ts").BookDetails | null>,
   ) {
     return ensureBookDetailsFn(this.db, sessionId, lookup);
   }

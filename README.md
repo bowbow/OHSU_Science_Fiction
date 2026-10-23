@@ -22,6 +22,15 @@ created automatically by application startup.
 
 ### Google Books API configuration
 
+Open Library supplies the book choices and the cover selected by an administrator.
+The application retains that choice's exact Open Library edition key, work key,
+and work-level ISBN set. It tries the selected edition's ISBN first; if Google
+does not have that edition, it accepts another edition only when Google reports an
+ISBN that Open Library assigns to the same work. If that identity cannot be
+established, the site shows no Google Books details rather than risk describing a
+different book. An available Open Library cover always takes precedence over a
+Google Books cover.
+
 Use separate Google Books API keys for local development and production. In
 [Google Cloud Console](https://console.cloud.google.com/), enable the Google Books
 API, create an API key for each environment, and restrict both keys to the Google

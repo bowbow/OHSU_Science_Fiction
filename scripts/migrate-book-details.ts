@@ -3,6 +3,9 @@ import { pathToFileURL } from "node:url";
 import { DatabaseSync } from "node:sqlite";
 
 const COLUMNS = [
+  ["open_library_edition_key", "TEXT"],
+  ["open_library_work_key", "TEXT"],
+  ["open_library_isbns", "TEXT"],
   ["google_books_id", "TEXT"],
   ["book_authors", "TEXT"],
   ["book_summary", "TEXT"],

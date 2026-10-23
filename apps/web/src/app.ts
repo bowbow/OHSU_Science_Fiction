@@ -26,7 +26,7 @@ export function createApp(options: {
   secureCookies?: boolean;
   covers?: (title: string) => Promise<number | null>;
   matches?: (title: string) => Promise<CatalogBook[]>;
-  details?: (title: string, authors: string) => Promise<BookDetails | null>;
+  details?: (title: string, authors: string, editionKey: string | null, workIsbns: string[]) => Promise<BookDetails | null>;
   activityLog?: (event: ActivityEvent) => void;
 }) {
   const secure = options.secureCookies ?? false;
@@ -358,7 +358,7 @@ async function bookClubPage(
   options: {
     core: Core;
     covers?: (title: string) => Promise<number | null>;
-    details?: (title: string, authors: string) => Promise<BookDetails | null>;
+    details?: (title: string, authors: string, editionKey: string | null, workIsbns: string[]) => Promise<BookDetails | null>;
   },
   member: ReturnType<Core["currentMember"]>,
   sessionId: string | null,

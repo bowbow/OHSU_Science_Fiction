@@ -7,6 +7,9 @@ import { test } from "node:test";
 import { migrateBookDetailsDatabase } from "../migrate-book-details.ts";
 
 const EXPECTED_COLUMNS = [
+  "open_library_edition_key",
+  "open_library_work_key",
+  "open_library_isbns",
   "google_books_id",
   "book_authors",
   "book_summary",

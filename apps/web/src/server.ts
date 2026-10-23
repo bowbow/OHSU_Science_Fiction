@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { createServer } from "node:http";
-import { findOpenLibraryBooks, findOpenLibraryCoverId, openCore } from "@bookclub/core";
+import { findOpenLibraryBooks, findOpenLibraryCoverId, findOpenLibraryEditionIsbn, openCore } from "@bookclub/core";
 import { activityLogPath, createActivityLog } from "./activity-log.ts";
 import { createApp } from "./app.ts";
 import { loadConfig } from "./config.ts";
@@ -8,12 +8,25 @@ import { createGoogleBooksLookup } from "./google-books.ts";
 
 const config = loadConfig();
 const core = openCore(config.sqlitePath, { initializeDatabase: config.initializeDatabase });
+const googleBooks = config.googleBooksApiKey ? createGoogleBooksLookup(config.googleBooksApiKey) : null;
 const app = createApp({
   core,
   secureCookies: config.publicBaseUrl.startsWith("https://"),
   covers: findOpenLibraryCoverId,
   matches: findOpenLibraryBooks,
-  details: config.googleBooksApiKey ? createGoogleBooksLookup(config.googleBooksApiKey) : undefined,
+  details: googleBooks
+    ? async (title, authors, editionKey, workIsbns) => {
+        let editionIsbn: string | null = null;
+        if (editionKey) {
+          try {
+            editionIsbn = await findOpenLibraryEditionIsbn(editionKey);
+          } catch {
+            // The work-level ISBN allowlist still prevents a cross-book match.
+          }
+        }
+        return googleBooks(title, authors, editionIsbn, workIsbns);
+      }
+    : undefined,
   activityLog: createActivityLog(activityLogPath(config.sqlitePath)),
 });
 
