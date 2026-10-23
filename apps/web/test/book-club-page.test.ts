@@ -217,7 +217,9 @@ test("a found cover is shown and a missing cover stays text", async () => {
   assert.match(item(page.body, "Dune"), /class="book-title" hidden/);
   const plain = item(page.body, "Not A Real Book Zzq");
   assert.equal(plain.includes("<img"), false);
+  assert.match(plain, /<div class="book-float-group cover-float"><div class="book-stack">/);
   assert.match(plain, /class="book-title">Not A Real Book Zzq<\/span>/);
+  assert.equal(page.body.includes("classList.remove('cover-float')"), false);
 });
 
 test("members cast one vote, can move it, and the most votes are listed first", async () => {
@@ -282,7 +284,7 @@ test("members cast one vote, can move it, and the most votes are listed first", 
 
   const adminView = await app.handle({ method: "GET", path: "/book-club", headers: { cookie: admin } });
   const adminDune = item(adminView.body, "Dune");
-  assert.match(adminDune, /<div class="book-float-group"><div class="book-stack">/);
+  assert.match(adminDune, /<div class="book-float-group cover-float"><div class="book-stack">/);
   assert.match(adminDune, /<details class="voter-disclosure">/);
   assert.match(adminDune, /<\/div><details class="voter-disclosure">/);
   assert.match(adminDune, /<summary>View voters<\/summary>/);

@@ -1089,10 +1089,24 @@ export function page(options: {
         drop-shadow(0 0 12px rgba(87, 222, 211, 0.2));
     }
     html[data-variant="scifi"] .book-stack:not(:has(.cover)) {
-      height: auto;
-      min-height: 17rem;
+      height: 27rem;
+      min-height: 27rem;
       justify-content: center;
       padding-top: 4.2rem;
+    }
+    html[data-variant="scifi"] .book-stack:not(:has(.cover)) > .votes {
+      position: absolute;
+      top: 1.5rem;
+      left: 1.9rem;
+      margin: 0;
+    }
+    html[data-variant="scifi"] .book-stack:not(:has(.cover)) > .book-title {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: calc(100% - 3.3rem);
+      transform: translate(-50%, -50%);
+      text-align: center;
     }
     html[data-variant="scifi"] .book-stack > .votes {
       position: relative;

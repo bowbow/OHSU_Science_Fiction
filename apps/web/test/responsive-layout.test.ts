@@ -100,6 +100,9 @@ test("the sci-fi books use a local electronic card image", () => {
   assert.match(source, /\.book-stack > \.votes\s*\{[^}]*position:\s*relative;[^}]*align-self:\s*flex-start;[^}]*flex:\s*0 0 auto;/s);
   assert.match(source, /\.book-stack > \.votes\s*\{[^}]*background:\s*linear-gradient[^}]*font-size:\s*0\.66rem;/s);
   assert.match(source, /html\[data-variant="scifi"\] \.book-stack,[\s\S]*?height:\s*27rem;[\s\S]*?min-height:\s*27rem;[\s\S]*?padding:\s*1\.5rem 1\.65rem 2rem;/s);
+  assert.match(source, /\.book-stack:not\(:has\(\.cover\)\)\s*\{[^}]*height:\s*27rem;[^}]*min-height:\s*27rem;[^}]*justify-content:\s*center;/s);
+  assert.match(source, /\.book-stack:not\(:has\(\.cover\)\) > \.votes\s*\{[^}]*position:\s*absolute;[^}]*top:\s*1\.5rem;[^}]*left:\s*1\.9rem;[^}]*margin:\s*0;/s);
+  assert.match(source, /\.book-stack:not\(:has\(\.cover\)\) > \.book-title\s*\{[^}]*position:\s*absolute;[^}]*top:\s*50%;[^}]*left:\s*50%;[^}]*transform:\s*translate\(-50%, -50%\);/s);
   assert.match(source, /\.book-stack \.cover,[\s\S]*?\.book-stack \.book-actions\s*\{[^}]*flex:\s*0 0 auto;/s);
   assert.match(source, /\.book-stack \.book-actions\s*\{[^}]*margin-top:\s*auto;/s);
   assert.match(source, /\.book-float-group\s*\{[^}]*display:\s*flex;[^}]*flex-direction:\s*column;/s);
