@@ -227,6 +227,43 @@ test("a found cover is shown and a missing cover stays text", async () => {
   assert.equal(page.body.includes("classList.remove('cover-float')"), false);
 });
 
+test("book information opens from the card and includes voting-relevant details", async () => {
+  const app = createApp({
+    core: coreWithAdmin(),
+    details: async (title) => title === "Dune" ? {
+      sourceId: "dune-volume",
+      authors: "Frank Herbert",
+      summary: "A young heir confronts <danger> on Arrakis.",
+      categories: ["Science Fiction", "Political fiction"],
+      averageRating: 4.5,
+      ratingsCount: 321,
+      infoUrl: "https://books.google.com/books?id=dune-volume",
+      thumbnailUrl: "https://books.google.com/books/content?id=dune-volume",
+    } : null,
+  });
+  const admin = await signIn(app, "bow", "admin");
+  await app.handle({ method: "POST", path: "/book-club/open", headers: { cookie: admin } });
+  await app.handle({
+    method: "POST",
+    path: "/book-club/suggestions",
+    headers: { cookie: admin, "content-type": "application/x-www-form-urlencoded" },
+    body: "title=Dune",
+  });
+
+  const response = await app.handle({ method: "GET", path: "/book-club", headers: { cookie: admin } });
+  const dune = item(response.body, "Dune");
+  assert.match(dune, /<details class="book-information">/);
+  assert.match(dune, /aria-label="Show information about Dune"/);
+  assert.match(dune, /<h4>Story summary<\/h4>/);
+  assert.match(dune, /A young heir confronts &lt;danger&gt; on Arrakis\./);
+  assert.match(dune, /Science Fiction/);
+  assert.match(dune, /Political fiction/);
+  assert.match(dune, /<strong>4\.5 \/ 5<\/strong> on Google Books \(321 ratings\)/);
+  assert.match(dune, /href="https:\/\/books\.google\.com\/books\?id=dune-volume"/);
+  assert.match(dune, /src="https:\/\/books\.google\.com\/books\/content\?id=dune-volume"/);
+  assert.match(response.body, /document\.querySelectorAll\("\.book-information"\)/);
+});
+
 test("members cast one vote, can move it, and the most votes are listed first", async () => {
   const app = createApp({ core: coreWithAdmin() });
   const admin = await signIn(app, "bow", "admin");

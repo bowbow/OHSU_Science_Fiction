@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { DatabaseSync } from "node:sqlite";
+import type { BookDetails, BookDetailsView } from "./book-details.ts";
 import type { CatalogBook } from "./covers.ts";
 import { actionFailure, isUniqueConstraint, type ActionResult } from "./errors.ts";
 import { currentMember } from "./session.ts";
@@ -11,6 +12,8 @@ export type BookSuggestionView = {
   votes: number;
   votedByMe: boolean;
   coverId: number | null;
+  coverUrl: string | null;
+  details: BookDetailsView | null;
   voters?: string[];
 };
 
@@ -45,6 +48,13 @@ type SuggestionRow = {
   votes: number;
   voted_by_me: number;
   cover_id: number | null;
+  book_authors: string | null;
+  book_summary: string | null;
+  book_categories: string | null;
+  book_average_rating: number | null;
+  book_ratings_count: number | null;
+  book_info_url: string | null;
+  book_thumbnail_url: string | null;
 };
 
 export function cleanTitle(title: string): string {
@@ -67,7 +77,9 @@ export function bookClubRounds(db: DatabaseSync, sessionId: string | null | unde
      LIMIT 1`,
   ).all() as RoundRow[];
   const suggestions = db.prepare(
-    `SELECT s.id, s.title, s.cover_id, m.username,
+    `SELECT s.id, s.title, s.cover_id, s.book_authors, s.book_summary,
+            s.book_categories, s.book_average_rating, s.book_ratings_count,
+            s.book_info_url, s.book_thumbnail_url, m.username,
             COUNT(v.id) AS votes,
             SUM(CASE WHEN v.member_id = ? THEN 1 ELSE 0 END) AS voted_by_me
      FROM book_suggestions s
@@ -133,6 +145,8 @@ export function bookClubRounds(db: DatabaseSync, sessionId: string | null | unde
             votes: row.votes,
             votedByMe: row.voted_by_me === 1,
             coverId: row.cover_id,
+            coverUrl: row.book_thumbnail_url,
+            details: detailsView(row),
           };
           if (member.role === "admin") {
             suggestion.voters = votersBySuggestion.get(row.id) ?? [];
@@ -261,8 +275,9 @@ export async function suggestMatchedBook(
   try {
     db.prepare(
       `INSERT INTO book_suggestions (
-        id, book_club_id, title, title_normalized, suggested_by, suggested_at, cover_id, cover_checked
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, 1)`,
+        id, book_club_id, title, title_normalized, suggested_by, suggested_at,
+        cover_id, cover_checked, book_authors
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)`,
     ).run(
       randomUUID(),
       open.id,
@@ -271,6 +286,7 @@ export async function suggestMatchedBook(
       member.id,
       new Date().toISOString(),
       chosen?.coverId ?? null,
+      chosen?.authors || null,
     );
   } catch (error) {
     if (isUniqueConstraint(error)) {
@@ -475,5 +491,81 @@ export async function ensureBookCovers(
     db.prepare(
       "UPDATE book_suggestions SET cover_id = ?, cover_checked = 1 WHERE id = ?",
     ).run(coverId, row.id);
+  }
+}
+
+export async function ensureBookDetails(
+  db: DatabaseSync,
+  sessionId: string | null | undefined,
+  lookup: (title: string, authors: string) => Promise<BookDetails | null>,
+): Promise<void> {
+  if (!currentMember(db, sessionId)) {
+    return;
+  }
+  const pending = db.prepare(
+    `SELECT id, title, book_authors
+     FROM book_suggestions
+     WHERE book_details_checked = 0`,
+  ).all() as { id: string; title: string; book_authors: string | null }[];
+  for (const row of pending) {
+    let details: BookDetails | null;
+    try {
+      details = await lookup(row.title, row.book_authors ?? "");
+    } catch {
+      continue;
+    }
+    const authors = details?.authors.trim() || row.book_authors;
+    const categories = details ? JSON.stringify(cleanCategories(details.categories)) : null;
+    db.prepare(
+      `UPDATE book_suggestions
+       SET google_books_id = ?, book_authors = ?, book_summary = ?, book_categories = ?,
+           book_average_rating = ?, book_ratings_count = ?, book_info_url = ?,
+           book_thumbnail_url = ?, book_details_checked = 1
+       WHERE id = ?`,
+    ).run(
+      details?.sourceId.trim() || null,
+      authors || null,
+      details?.summary?.trim() || null,
+      categories,
+      details?.averageRating ?? null,
+      details?.ratingsCount ?? null,
+      details?.infoUrl ?? null,
+      details?.thumbnailUrl ?? null,
+      row.id,
+    );
+  }
+}
+
+function detailsView(row: SuggestionRow): BookDetailsView | null {
+  const categories = parseCategories(row.book_categories);
+  if (
+    !row.book_authors && !row.book_summary && categories.length === 0
+    && row.book_average_rating === null && row.book_info_url === null
+  ) {
+    return null;
+  }
+  return {
+    authors: row.book_authors ?? "",
+    summary: row.book_summary,
+    categories,
+    averageRating: row.book_average_rating,
+    ratingsCount: row.book_ratings_count,
+    infoUrl: row.book_info_url,
+  };
+}
+
+function cleanCategories(categories: string[]): string[] {
+  return [...new Set(categories.map((category) => category.trim()).filter(Boolean))].slice(0, 8);
+}
+
+function parseCategories(value: string | null): string[] {
+  if (!value) {
+    return [];
+  }
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? cleanCategories(parsed.filter((item): item is string => typeof item === "string")) : [];
+  } catch {
+    return [];
   }
 }

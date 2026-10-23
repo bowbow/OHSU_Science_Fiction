@@ -26,6 +26,7 @@ Assert-Contains $remote "Release archive contains a forbidden" "Remote deploymen
 Assert-Contains $remote "current\.rollback" "Remote deployment must retain rollback behavior."
 Assert-Contains $remote "backup-database\.sh.+pre-deploy" "Remote deployment must back up the database before activation."
 Assert-Contains $remote "migrate-feedback\.ts" "Remote deployment must run the explicit feedback migration."
+Assert-Contains $remote "migrate-book-details\.ts" "Remote deployment must run the additive book-details migration."
 Assert-Contains $remote "bookclub-backup\.timer" "Remote deployment must install the weekly backup timer."
 Assert-Contains $remote "aws ssm get-parameter" "Remote deployment must retrieve the Google Books key from Parameter Store."
 Assert-Contains $remote "--with-decryption" "Remote deployment must decrypt the SecureString only on the instance."

@@ -314,6 +314,7 @@ export function page(options: {
     }
     @media (prefers-reduced-motion: reduce) {
       .cover-float { animation: none; }
+      .book-information-drawer { animation: none; }
     }
     @media (hover: none), (pointer: coarse) {
       .cover-float { animation: none; }
@@ -375,6 +376,75 @@ export function page(options: {
     dialog.confirm button.danger { color: #9f1239; border-color: #9f1239; background: rgba(159, 18, 57, 0.08); }
     .book-remove button.danger:hover,
     dialog.confirm button.danger:hover { color: white; background: #9f1239; }
+    .book:has(.book-information[open]) { z-index: 10; }
+    .book-information {
+      position: absolute;
+      z-index: 5;
+      top: 2.9rem;
+      right: 0.45rem;
+      width: 2rem;
+      height: 2rem;
+      text-align: left;
+    }
+    .book-information > summary {
+      display: grid;
+      place-items: center;
+      width: 2rem;
+      height: 2rem;
+      box-sizing: border-box;
+      border: 1px solid var(--accent);
+      border-radius: 50%;
+      color: var(--accent);
+      background: var(--surface);
+      box-shadow: 0 5px 14px rgba(36, 78, 139, 0.18);
+      cursor: pointer;
+      font-family: Georgia, serif;
+      font-size: 1.05rem;
+      font-weight: 700;
+      line-height: 1;
+      list-style: none;
+    }
+    .book-information > summary::-webkit-details-marker { display: none; }
+    .book-information > summary:hover { color: white; background: var(--accent); }
+    .book-information > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+    .book-information-drawer {
+      position: absolute;
+      z-index: 8;
+      top: -0.35rem;
+      left: calc(100% + 0.65rem);
+      width: min(20rem, calc(100vw - 2rem));
+      max-height: min(31rem, calc(100vh - 2rem));
+      padding: 1.1rem 1.15rem;
+      overflow: auto;
+      box-sizing: border-box;
+      border: 1px solid var(--line);
+      border-radius: 1rem;
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.98);
+      box-shadow: 0 18px 42px rgba(19, 43, 78, 0.28);
+      font-size: 0.88rem;
+      font-weight: 400;
+      line-height: 1.5;
+      animation: book-drawer-in 180ms ease-out both;
+    }
+    .book-information.opens-left .book-information-drawer { right: calc(100% + 0.65rem); left: auto; }
+    .book-information-drawer h3 { margin: 0; color: var(--ink); font-size: 1.05rem; line-height: 1.3; }
+    .book-information-drawer h4 { margin: 1rem 0 0.35rem; color: var(--ink); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .book-information-drawer p { margin: 0.45rem 0; }
+    .book-information-authors, .book-information-unavailable, .book-information-rating { color: #526174; }
+    .book-information-summary { white-space: pre-line; }
+    .book-information-categories { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 0.85rem 0; }
+    .book-information-categories span { padding: 0.2rem 0.48rem; border-radius: 999px; color: #244e8b; background: rgba(36, 78, 139, 0.09); font-size: 0.72rem; }
+    .book-information-source { margin-top: 0.8rem; }
+    @keyframes book-drawer-in {
+      from { opacity: 0; transform: translateX(-0.7rem); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    .book-information.opens-left .book-information-drawer { animation-name: book-drawer-in-left; }
+    @keyframes book-drawer-in-left {
+      from { opacity: 0; transform: translateX(0.7rem); }
+      to { opacity: 1; transform: translateX(0); }
+    }
     .voter-disclosure {
       width: 100%;
       max-width: 14rem;
@@ -740,6 +810,17 @@ export function page(options: {
       input { width: 100%; max-width: 100%; }
       button { min-height: 44px; }
       .books { gap: 2rem 1rem; }
+      .book-information-drawer,
+      .book-information.opens-left .book-information-drawer {
+        position: fixed;
+        top: 50%;
+        right: auto;
+        left: 50%;
+        width: min(22rem, calc(100vw - 2rem));
+        max-height: calc(100vh - 2rem);
+        transform: translate(-50%, -50%);
+        animation: none;
+      }
       .books button, .matches button, .meetings button { min-height: 44px; padding: 0.55rem 0.8rem; }
       .book-title, .meeting-when, p { overflow-wrap: anywhere; }
       .calendar {
@@ -1261,6 +1342,51 @@ export function page(options: {
     }
     html[data-variant="scifi"] .book-remove button.danger:hover,
     html[data-variant="scifi"] dialog.confirm button.danger:hover { color: white; background: rgba(159, 18, 57, 0.9); }
+    html[data-variant="scifi"] .book-information {
+      top: 4.1rem;
+      right: 1.35rem;
+    }
+    html[data-variant="scifi"] .book-information > summary {
+      border-radius: 0;
+      border-color: rgba(87, 222, 211, 0.78);
+      clip-path: polygon(0.4rem 0, 100% 0, 100% calc(100% - 0.4rem), calc(100% - 0.4rem) 100%, 0 100%, 0 0.4rem);
+      color: var(--hud-teal);
+      background: rgba(3, 22, 27, 0.94);
+      box-shadow: 0 0 12px rgba(87, 222, 211, 0.25), inset 0 0 9px rgba(87, 222, 211, 0.08);
+      filter: drop-shadow(0 0 5px rgba(87, 222, 211, 0.26));
+      font-family: "Orbitron", sans-serif;
+      font-size: 0.8rem;
+    }
+    html[data-variant="scifi"] .book-information > summary:hover {
+      color: #021012;
+      background: var(--hud-teal);
+      box-shadow: 0 0 18px rgba(87, 222, 211, 0.52);
+    }
+    html[data-variant="scifi"] .book-information-drawer {
+      border: 1px solid rgba(87, 222, 211, 0.7);
+      border-radius: 0;
+      clip-path: polygon(0.8rem 0, 100% 0, 100% calc(100% - 0.8rem), calc(100% - 0.8rem) 100%, 0 100%, 0 0.8rem);
+      color: var(--hud-text);
+      background:
+        linear-gradient(rgba(87, 222, 211, 0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(87, 222, 211, 0.025) 1px, transparent 1px),
+        rgba(2, 12, 15, 0.98);
+      background-size: 18px 18px, 18px 18px, auto;
+      box-shadow: 0 0 30px rgba(87, 222, 211, 0.22), inset 0 0 24px rgba(83, 167, 255, 0.05);
+    }
+    html[data-variant="scifi"] .book-information-drawer h3 { color: #ffffff; font-family: "Orbitron", sans-serif; font-size: 0.9rem; }
+    html[data-variant="scifi"] .book-information-drawer h4 { color: var(--hud-teal); font-family: "Orbitron", sans-serif; font-size: 0.64rem; }
+    html[data-variant="scifi"] .book-information-authors,
+    html[data-variant="scifi"] .book-information-unavailable,
+    html[data-variant="scifi"] .book-information-rating { color: var(--hud-muted); }
+    html[data-variant="scifi"] .book-information-categories span {
+      border: 1px solid rgba(83, 167, 255, 0.42);
+      border-radius: 0;
+      color: #9bceff;
+      background: rgba(83, 167, 255, 0.09);
+      clip-path: polygon(0.3rem 0, 100% 0, 100% calc(100% - 0.3rem), calc(100% - 0.3rem) 100%, 0 100%, 0 0.3rem);
+    }
+    html[data-variant="scifi"] .book-information-source a { color: var(--hud-teal); }
     html[data-variant="scifi"] .success { color: #9bf4ec; text-shadow: 0 0 10px rgba(87, 222, 211, 0.35); }
     html[data-variant="scifi"] .feedback-form textarea {
       color: var(--hud-text);

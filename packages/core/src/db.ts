@@ -39,6 +39,15 @@ CREATE TABLE IF NOT EXISTS book_suggestions (
   suggested_at TEXT NOT NULL,
   cover_id INTEGER,
   cover_checked INTEGER NOT NULL DEFAULT 0,
+  google_books_id TEXT,
+  book_authors TEXT,
+  book_summary TEXT,
+  book_categories TEXT,
+  book_average_rating REAL,
+  book_ratings_count INTEGER,
+  book_info_url TEXT,
+  book_thumbnail_url TEXT,
+  book_details_checked INTEGER NOT NULL DEFAULT 0,
   UNIQUE (book_club_id, title_normalized)
 );
 
@@ -103,6 +112,7 @@ export function openDatabase(path: string, options: OpenDatabaseOptions = {}): D
     db.exec(SCHEMA);
     ensureRoleColumn(db);
     ensureCoverColumns(db);
+    ensureBookDetailColumns(db);
     ensureSelectedSuggestionColumn(db);
     ensureSelectedMeetingColumn(db);
     ensureFeedbackDeletedColumn(db);
@@ -120,6 +130,30 @@ function ensureCoverColumns(db: DatabaseSync): void {
   }
   if (!columns.some((column) => column.name === "cover_checked")) {
     db.exec("ALTER TABLE book_suggestions ADD COLUMN cover_checked INTEGER NOT NULL DEFAULT 0");
+  }
+}
+
+function ensureBookDetailColumns(db: DatabaseSync): void {
+  const columns = db.prepare("PRAGMA table_info(book_suggestions)").all() as { name: string }[];
+  if (columns.length === 0) {
+    return;
+  }
+  const additions = [
+    ["google_books_id", "TEXT"],
+    ["book_authors", "TEXT"],
+    ["book_summary", "TEXT"],
+    ["book_categories", "TEXT"],
+    ["book_average_rating", "REAL"],
+    ["book_ratings_count", "INTEGER"],
+    ["book_info_url", "TEXT"],
+    ["book_thumbnail_url", "TEXT"],
+    ["book_details_checked", "INTEGER NOT NULL DEFAULT 0"],
+  ] as const;
+  const existing = new Set(columns.map((column) => column.name));
+  for (const [name, definition] of additions) {
+    if (!existing.has(name)) {
+      db.exec(`ALTER TABLE book_suggestions ADD COLUMN ${name} ${definition}`);
+    }
   }
 }
 

@@ -67,8 +67,10 @@ try {
     apps/web/test/feedback-page.test.ts `
     apps/web/test/health.test.ts `
     apps/web/test/responsive-layout.test.ts `
+    apps/web/test/google-books.test.ts `
     scripts/test/sqlite-backup.test.ts `
-    scripts/test/feedback-migration.test.ts
+    scripts/test/feedback-migration.test.ts `
+    scripts/test/book-details-migration.test.ts
   if ($LASTEXITCODE -ne 0) { throw "Tests failed; deployment stopped." }
 
   $instanceId = Terraform-Output "instance_id"

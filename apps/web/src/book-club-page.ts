@@ -496,11 +496,14 @@ function suggestionList(
          </details>`
       : "";
     const suggestedBy = escapeHtml(suggestion.suggestedBy);
-    if (suggestion.coverId === null) {
-      return `<li class="book" title="Suggested by ${suggestedBy}"><div class="book-float-group cover-float"><div class="book-stack">${votes}${remove}<span class="book-title">${title}</span>${actions}</div>${voters}</div></li>`;
+    const information = bookInformation(suggestion, title);
+    const googleCover = safeBookCoverUrl(suggestion.coverUrl);
+    if (suggestion.coverId === null && googleCover === null) {
+      return `<li class="book" title="Suggested by ${suggestedBy}"><div class="book-float-group cover-float"><div class="book-stack">${votes}${remove}${information}<span class="book-title">${title}</span>${actions}</div>${voters}</div></li>`;
     }
-    const cover = `<img class="cover" alt="${title}" src="https://covers.openlibrary.org/b/id/${suggestion.coverId}-M.jpg" onerror="var card=this.closest('li');var name=card.querySelector('.book-title');if(name)name.hidden=false;this.remove()">`;
-    return `<li class="book" title="Suggested by ${suggestedBy}"><div class="book-float-group cover-float"><div class="book-stack">${votes}${remove}${cover}<span class="book-title" hidden>${title}</span>${actions}</div>${voters}</div></li>`;
+    const coverSource = googleCover ?? `https://covers.openlibrary.org/b/id/${suggestion.coverId}-M.jpg`;
+    const cover = `<img class="cover" alt="${title}" src="${escapeHtml(coverSource)}" onerror="var card=this.closest('li');var name=card.querySelector('.book-title');if(name)name.hidden=false;this.remove()">`;
+    return `<li class="book" title="Suggested by ${suggestedBy}"><div class="book-float-group cover-float"><div class="book-stack">${votes}${remove}${information}${cover}<span class="book-title" hidden>${title}</span>${actions}</div>${voters}</div></li>`;
   }).join("");
   const endDivider = showActions ? `<div class="books-end-divider" aria-hidden="true"></div>` : "";
   return `<ul class="books">${items}</ul>${endDivider}
@@ -519,8 +522,88 @@ function suggestionList(
           if (dialog instanceof HTMLDialogElement) dialog.close();
         });
       });
+      document.querySelectorAll(".book-information").forEach((details) => {
+        details.addEventListener("toggle", () => {
+          if (!details.open) return;
+          document.querySelectorAll(".book-information[open]").forEach((other) => {
+            if (other !== details) other.removeAttribute("open");
+          });
+          const drawer = details.querySelector(".book-information-drawer");
+          if (!(drawer instanceof HTMLElement)) return;
+          details.classList.remove("opens-left");
+          if (drawer.getBoundingClientRect().right > window.innerWidth - 12) {
+            details.classList.add("opens-left");
+          }
+        });
+      });
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+          document.querySelectorAll(".book-information[open]").forEach((details) => details.removeAttribute("open"));
+        }
+      });
     })();
   </script>`;
+}
+
+function bookInformation(
+  suggestion: BookClubRoundView["suggestions"][number],
+  escapedTitle: string,
+): string {
+  const details = suggestion.details;
+  if (!details) {
+    return "";
+  }
+  const authors = details.authors ? `<p class="book-information-authors">by ${escapeHtml(details.authors)}</p>` : "";
+  const summary = details.summary
+    ? `<p class="book-information-summary">${escapeHtml(details.summary)}</p>`
+    : `<p class="book-information-unavailable">Google Books does not provide a summary for this edition.</p>`;
+  const categories = details.categories.length > 0
+    ? `<div class="book-information-categories" aria-label="Genres">${details.categories.map((category) => `<span>${escapeHtml(category)}</span>`).join("")}</div>`
+    : "";
+  const rating = details.averageRating === null
+    ? `<p class="book-information-rating">No reader rating is available from Google Books.</p>`
+    : `<p class="book-information-rating"><strong>${details.averageRating.toFixed(1)} / 5</strong> on Google Books${ratingCount(details.ratingsCount)}</p>`;
+  const sourceUrl = safeBookInfoUrl(details.infoUrl);
+  const source = sourceUrl
+    ? `<p class="book-information-source"><a href="${escapeHtml(sourceUrl)}" target="_blank" rel="noreferrer">View on Google Books</a></p>`
+    : "";
+  return `<details class="book-information">
+    <summary aria-label="Show information about ${escapedTitle}" title="Book information"><span aria-hidden="true">i</span></summary>
+    <section class="book-information-drawer" aria-label="Book information for ${escapedTitle}">
+      <h3>${escapedTitle}</h3>${authors}
+      <h4>Story summary</h4>${summary}
+      ${categories}
+      ${rating}${source}
+    </section>
+  </details>`;
+}
+
+function ratingCount(count: number | null): string {
+  if (count === null) {
+    return "";
+  }
+  return ` (${count.toLocaleString("en-US")} ${count === 1 ? "rating" : "ratings"})`;
+}
+
+function safeBookInfoUrl(value: string | null): string | null {
+  if (!value) return null;
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && url.hostname === "books.google.com" ? url.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
+function safeBookCoverUrl(value: string | null): string | null {
+  if (!value) return null;
+  try {
+    const url = new URL(value);
+    const trusted = url.hostname === "books.google.com" || url.hostname.endsWith(".googleusercontent.com");
+    return url.protocol === "https:" && trusted ? url.toString() : null;
+  } catch {
+    return null;
+  }
 }
 
 export function closeBookClubForm(

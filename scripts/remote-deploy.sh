@@ -90,6 +90,10 @@ runuser -u bookclub -- /usr/local/bin/node --experimental-strip-types \
   "$staging_path/scripts/migrate-feedback.ts" \
   /var/lib/bookclub/bookclub.sqlite
 
+runuser -u bookclub -- /usr/local/bin/node --experimental-strip-types \
+  "$staging_path/scripts/migrate-book-details.ts" \
+  /var/lib/bookclub/bookclub.sqlite
+
 if [[ ! -d "$release_path" ]]; then
   mv "$staging_path" "$release_path"
 else

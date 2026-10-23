@@ -4,6 +4,7 @@ import { findOpenLibraryBooks, findOpenLibraryCoverId, openCore } from "@bookclu
 import { activityLogPath, createActivityLog } from "./activity-log.ts";
 import { createApp } from "./app.ts";
 import { loadConfig } from "./config.ts";
+import { createGoogleBooksLookup } from "./google-books.ts";
 
 const config = loadConfig();
 const core = openCore(config.sqlitePath, { initializeDatabase: config.initializeDatabase });
@@ -12,6 +13,7 @@ const app = createApp({
   secureCookies: config.publicBaseUrl.startsWith("https://"),
   covers: findOpenLibraryCoverId,
   matches: findOpenLibraryBooks,
+  details: config.googleBooksApiKey ? createGoogleBooksLookup(config.googleBooksApiKey) : undefined,
   activityLog: createActivityLog(activityLogPath(config.sqlitePath)),
 });
 

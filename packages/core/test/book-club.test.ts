@@ -248,6 +248,71 @@ test("a cover is stored when found, and a missing cover stays text", async () =>
   assert.equal(suggestions(core, adminId).find((item) => item.title === "Kindred")?.coverId, 7);
 });
 
+test("book details are stored once and are deleted with the suggestion", async () => {
+  const { core, adminId, regularId } = adminSession();
+  assert.equal(core.openBookClub(adminId).ok, true);
+  assert.equal(core.suggestBook({ sessionId: adminId, title: "Dune" }).ok, true);
+  let lookups = 0;
+  await core.ensureBookDetails(regularId, async (title, authors) => {
+    lookups += 1;
+    assert.equal(title, "Dune");
+    assert.equal(authors, "");
+    return {
+      sourceId: "google-dune",
+      authors: "Frank Herbert",
+      summary: "A struggle for control of a desert world.",
+      categories: ["Science Fiction", "Fiction / Political"],
+      averageRating: 4.5,
+      ratingsCount: 321,
+      infoUrl: "https://books.google.com/books?id=google-dune",
+      thumbnailUrl: "https://books.google.com/books/content?id=google-dune",
+    };
+  });
+  await core.ensureBookDetails(regularId, async () => {
+    lookups += 1;
+    return null;
+  });
+
+  const dune = suggestions(core, regularId).find((item) => item.title === "Dune");
+  assert.ok(dune);
+  assert.equal(lookups, 1);
+  assert.equal(dune.coverUrl, "https://books.google.com/books/content?id=google-dune");
+  assert.deepEqual(dune.details, {
+    authors: "Frank Herbert",
+    summary: "A struggle for control of a desert world.",
+    categories: ["Science Fiction", "Fiction / Political"],
+    averageRating: 4.5,
+    ratingsCount: 321,
+    infoUrl: "https://books.google.com/books?id=google-dune",
+  });
+
+  assert.equal(core.removeBookSuggestion({ sessionId: adminId, suggestionId: dune.id }).ok, true);
+  const remaining = core.db.prepare("SELECT COUNT(*) AS count FROM book_suggestions WHERE google_books_id = ?")
+    .get("google-dune") as { count: number };
+  assert.equal(remaining.count, 0);
+});
+
+test("a failed book-details lookup is retried later", async () => {
+  const { core, adminId } = adminSession();
+  assert.equal(core.openBookClub(adminId).ok, true);
+  assert.equal(core.suggestBook({ sessionId: adminId, title: "Kindred" }).ok, true);
+  await core.ensureBookDetails(adminId, async () => {
+    throw new Error("offline");
+  });
+  assert.equal(suggestions(core, adminId)[0]?.details, null);
+  await core.ensureBookDetails(adminId, async () => ({
+    sourceId: "kindred",
+    authors: "Octavia E. Butler",
+    summary: "A modern woman is pulled into the antebellum past.",
+    categories: ["Science Fiction"],
+    averageRating: null,
+    ratingsCount: null,
+    infoUrl: null,
+    thumbnailUrl: null,
+  }));
+  assert.equal(suggestions(core, adminId)[0]?.details?.authors, "Octavia E. Butler");
+});
+
 test("closing the call selects the book with the most votes", () => {
   const { core, adminId, regularId } = adminSession();
   assert.deepEqual(core.closeBookClub({ sessionId: regularId }), { ok: false, failure: { code: "not_an_admin" } });

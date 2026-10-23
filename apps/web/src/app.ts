@@ -1,4 +1,4 @@
-import type { ActivityEvent, CatalogBook, Core } from "@bookclub/core";
+import type { ActivityEvent, BookDetails, CatalogBook, Core } from "@bookclub/core";
 import { clearSessionCookie, readSessionId, sessionCookie } from "./cookie.ts";
 import { closeBookClubForm, formatMeetingTime, openBookClubForm, proposeMeetingForm, removeBookForm, removeMeetingForm, renderBookClubPage, renderBookMatchPage, selectMeetingForm, startOverForm, suggestBookForm, voteForBookForm, voteForMeetingForm, withdrawMeetingForm } from "./book-club-page.ts";
 import { renderAccountPage } from "./account-page.ts";
@@ -26,6 +26,7 @@ export function createApp(options: {
   secureCookies?: boolean;
   covers?: (title: string) => Promise<number | null>;
   matches?: (title: string) => Promise<CatalogBook[]>;
+  details?: (title: string, authors: string) => Promise<BookDetails | null>;
   activityLog?: (event: ActivityEvent) => void;
 }) {
   const secure = options.secureCookies ?? false;
@@ -354,7 +355,11 @@ export function createApp(options: {
 }
 
 async function bookClubPage(
-  options: { core: Core; covers?: (title: string) => Promise<number | null> },
+  options: {
+    core: Core;
+    covers?: (title: string) => Promise<number | null>;
+    details?: (title: string, authors: string) => Promise<BookDetails | null>;
+  },
   member: ReturnType<Core["currentMember"]>,
   sessionId: string | null,
   secure: boolean,
@@ -363,6 +368,9 @@ async function bookClubPage(
 ): Promise<WebResponse> {
   if (member && options.covers) {
     await options.core.ensureBookCovers(sessionId, options.covers);
+  }
+  if (member && options.details) {
+    await options.core.ensureBookDetails(sessionId, options.details);
   }
   const rounds = member ? options.core.bookClubRounds(sessionId) : { ok: true as const, value: [] };
   return html(

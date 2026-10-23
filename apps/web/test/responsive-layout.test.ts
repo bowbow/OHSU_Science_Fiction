@@ -127,6 +127,13 @@ test("the sci-fi books use a local electronic card image", () => {
   assert.match(serverSource, /pathname === "\/assets\/book-card\.svg"/);
 });
 
+test("book information uses an angular drawer that remains usable on phones", () => {
+  assert.match(source, /\.book-information\s*\{[^}]*position:\s*absolute;[^}]*right:\s*0\.45rem;/s);
+  assert.match(source, /\.book-information-drawer\s*\{[^}]*max-height:[^}]*overflow:\s*auto;/s);
+  assert.match(source, /html\[data-variant="scifi"\] \.book-information-drawer\s*\{[^}]*clip-path:\s*polygon[^}]*background:/s);
+  assert.match(source, /@media \(max-width:\s*700px\)[\s\S]*?\.book-information-drawer,[\s\S]*?position:\s*fixed;[^}]*width:\s*min\(22rem, calc\(100vw - 2rem\)\);/s);
+});
+
 test("the sci-fi controls use layered HUD glows", () => {
   assert.match(
     source,
