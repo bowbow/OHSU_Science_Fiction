@@ -38,6 +38,17 @@ test("narrow forms, dialogs, calendars, and controls are constrained", () => {
   assert.match(source, /@media \(max-width:\s*700px\)[\s\S]*?button[^}]*min-height:\s*44px/);
 });
 
+test("book suggestion controls place closing beside the add-book panel", () => {
+  assert.match(source, /\.book-suggestion-controls\s*\{[^}]*display:\s*flex;[^}]*align-items:\s*center;/s);
+  assert.match(source, /@media \(max-width:\s*700px\)[\s\S]*?\.book-suggestion-controls\s*\{[^}]*flex-direction:\s*column;[^}]*align-items:\s*stretch;/s);
+});
+
+test("the sci-fi book grid ends with a notched HUD divider", () => {
+  assert.match(source, /\.books-end-divider\s*\{\s*display:\s*none;/s);
+  assert.match(source, /html\[data-variant="scifi"\] \.books-end-divider\s*\{[^}]*display:\s*block;[^}]*width:\s*100%;[^}]*border-top:\s*1px solid/s);
+  assert.match(source, /html\[data-variant="scifi"\] \.books-end-divider::before\s*\{[^}]*clip-path:\s*polygon/s);
+});
+
 test("unseen feedback summaries are bold and seen summaries are normal", () => {
   assert.match(source, /\.feedback-summary-line \{[\s\S]*?font-weight: 400;/);
   assert.match(source, /\.feedback-item\.is-unseen > \.feedback-summary-line \{[^}]*font-weight: 700;[^}]*background: rgba\(36, 78, 139, 0\.1\);/s);
@@ -104,6 +115,7 @@ test("the sci-fi books use a local electronic card image", () => {
   assert.match(source, /\.book-stack:not\(:has\(\.cover\)\) > \.votes\s*\{[^}]*position:\s*absolute;[^}]*top:\s*1\.5rem;[^}]*left:\s*1\.9rem;[^}]*margin:\s*0;/s);
   assert.match(source, /\.book-stack:not\(:has\(\.cover\)\) > \.book-title\s*\{[^}]*position:\s*absolute;[^}]*top:\s*50%;[^}]*left:\s*50%;[^}]*transform:\s*translate\(-50%, -50%\);/s);
   assert.match(source, /\.book-stack \.cover,[\s\S]*?\.book-stack \.book-actions\s*\{[^}]*flex:\s*0 0 auto;/s);
+  assert.match(source, /\.book-stack:has\(\.cover\) > \.cover\s*\{[^}]*position:\s*absolute;[^}]*top:\s*50%;[^}]*left:\s*50%;[^}]*transform:\s*translate\(-50%, -50%\);/s);
   assert.match(source, /\.book-stack \.book-actions\s*\{[^}]*margin-top:\s*auto;/s);
   assert.match(source, /\.book-float-group\s*\{[^}]*display:\s*flex;[^}]*flex-direction:\s*column;/s);
   assert.match(source, /\.book-float-group > \.voter-disclosure\s*\{[^}]*width:\s*min\(calc\(100% - 2\.8rem\), 11rem\);[^}]*margin-top:\s*-1\.75rem;/s);

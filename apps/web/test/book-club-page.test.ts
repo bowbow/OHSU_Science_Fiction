@@ -38,6 +38,8 @@ test("admins add books and regular members can only vote", async () => {
   });
   assert.match(openPage.body, /Book club is open for book suggestions/);
   assert.match(openPage.body, /No books have been suggested yet/);
+  assert.match(openPage.body, /<h2>Add a new book<\/h2>/);
+  assert.match(openPage.body, /class="book-suggestion-controls"[\s\S]*action="\/book-club\/suggestions"[\s\S]*action="\/book-club\/close"/);
   assert.match(openPage.body, /Suggest book/);
   assert.equal(openPage.body.includes("Open a new book club"), false);
 
@@ -57,6 +59,7 @@ test("admins add books and regular members can only vote", async () => {
 
   const regularPage = await app.handle({ method: "GET", path: "/book-club", headers: { cookie: regular } });
   assert.equal(regularPage.body.includes("Suggest book"), false);
+  assert.equal(regularPage.body.includes("Add a new book"), false);
   assert.equal(regularPage.body.includes('action="/book-club/suggestions"'), false);
 
   const refusedSuggestion = await app.handle({
@@ -75,6 +78,8 @@ test("admins add books and regular members can only vote", async () => {
     body: "title=The+Hobbit",
   });
   assert.equal(suggested.status, 303);
+  const adminListed = await app.handle({ method: "GET", path: "/book-club", headers: { cookie: admin } });
+  assert.match(adminListed.body, /<\/ul><div class="books-end-divider" aria-hidden="true"><\/div>[\s\S]*<h2>Add a new book<\/h2>/);
   const listed = await app.handle({
     method: "GET",
     path: "/book-club",

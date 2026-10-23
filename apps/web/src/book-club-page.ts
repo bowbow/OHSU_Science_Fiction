@@ -51,10 +51,16 @@ export function renderBookClubPage(options: {
     : "";
   const startOverAction = selected && options.member.role === "admin" ? startOverConfirm() : "";
   const suggestAction = open && options.member.role === "admin"
-    ? `<form class="sheet" method="post" action="/book-club/suggestions">
-         <label>Book title <input name="title" required></label>
-         <button type="submit">Suggest book</button>
-       </form>`
+    ? `<section class="book-suggestion-admin">
+         <h2>Add a new book</h2>
+         <div class="book-suggestion-controls">
+           <form class="sheet" method="post" action="/book-club/suggestions">
+             <label>Book title <input name="title" required></label>
+             <button type="submit">Suggest book</button>
+           </form>
+           ${closeAction}
+         </div>
+       </section>`
     : "";
   const chooseIds = tied && options.member.role === "admin" ? new Set(leaders.map((suggestion) => suggestion.id)) : new Set<string>();
   const openList = !selected && open && club ? suggestionList(club, options.member, true, chooseIds) : "";
@@ -65,7 +71,7 @@ export function renderBookClubPage(options: {
     member: options.member,
     active: "book-club",
     sidebarAction: startOverAction,
-    body: `${error}${tieNotice}${openList}${selectedView}${closeAction}${suggestAction}${openAction}`,
+    body: `${error}${tieNotice}${openList}${selectedView}${suggestAction}${openAction}`,
   });
 }
 
@@ -496,7 +502,8 @@ function suggestionList(
     const cover = `<img class="cover" alt="${title}" src="https://covers.openlibrary.org/b/id/${suggestion.coverId}-M.jpg" onerror="var card=this.closest('li');var name=card.querySelector('.book-title');if(name)name.hidden=false;this.remove()">`;
     return `<li class="book" title="Suggested by ${suggestedBy}"><div class="book-float-group cover-float"><div class="book-stack">${votes}${remove}${cover}<span class="book-title" hidden>${title}</span>${actions}</div>${voters}</div></li>`;
   }).join("");
-  return `<ul class="books">${items}</ul>
+  const endDivider = showActions ? `<div class="books-end-divider" aria-hidden="true"></div>` : "";
+  return `<ul class="books">${items}</ul>${endDivider}
   <script>
     (() => {
       document.querySelectorAll(".book-remove-open").forEach((button) => {

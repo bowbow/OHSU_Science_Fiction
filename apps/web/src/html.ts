@@ -201,6 +201,12 @@ export function page(options: {
       box-shadow: 0 12px 32px rgba(36, 78, 139, 0.08);
     }
     .sheet { max-width: 26rem; margin-top: 1rem; padding: 1.25rem 1.3rem 1.4rem; }
+    .book-suggestion-admin { width: min(100%, 48rem); margin-top: 1.5rem; }
+    .book-suggestion-admin h2 { margin-bottom: 0.7rem; }
+    .book-suggestion-controls { display: flex; align-items: center; gap: 1.25rem; }
+    .book-suggestion-controls > .sheet { flex: 1 1 26rem; margin-top: 0; }
+    .book-suggestion-controls > form:not(.sheet) { flex: 0 1 auto; margin: 0; }
+    .book-suggestion-controls > form:not(.sheet) button { margin: 0; }
     label { display: block; margin-top: 0.9rem; font-weight: 600; }
     .form-help { margin: 0.45rem 0 0; color: #526174; font-size: 0.9rem; line-height: 1.4; }
     input {
@@ -263,6 +269,7 @@ export function page(options: {
     }
     .winner .book-stack .cover { width: 100%; }
     .books { list-style: none; margin: 0; padding: 0.6rem 0 1rem; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2.4rem 1.5rem; align-items: start; }
+    .books-end-divider { display: none; }
     .books li { position: relative; z-index: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-width: 0; max-width: 100%; font-size: 1.05rem; font-weight: 600; line-height: 1.3; }
     .book-float-group { display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 100%; min-width: 0; }
     .book-stack {
@@ -727,6 +734,9 @@ export function page(options: {
       .winner .books { justify-content: center; }
       .sheet, form, input, button, .matches, .meetings { max-width: 100%; }
       .sheet { width: 100%; }
+      .book-suggestion-controls { flex-direction: column; align-items: stretch; }
+      .book-suggestion-controls > .sheet { flex-basis: auto; }
+      .book-suggestion-controls > form:not(.sheet) { align-self: flex-start; }
       input { width: 100%; max-width: 100%; }
       button { min-height: 44px; }
       .books { gap: 2rem 1rem; }
@@ -1071,6 +1081,39 @@ export function page(options: {
       );
     }
     html[data-variant="scifi"] .books { gap: 2rem 1.25rem; }
+    html[data-variant="scifi"] .books-end-divider {
+      display: block;
+      position: relative;
+      width: 100%;
+      height: 0.8rem;
+      margin: 0.35rem 0 0.75rem;
+      border-top: 1px solid rgba(87, 222, 211, 0.62);
+      filter: drop-shadow(0 0 5px rgba(87, 222, 211, 0.34));
+    }
+    html[data-variant="scifi"] .books-end-divider::before {
+      content: "";
+      position: absolute;
+      top: -1px;
+      left: 50%;
+      width: 7rem;
+      height: 0.55rem;
+      transform: translateX(-50%);
+      border: 1px solid rgba(83, 167, 255, 0.72);
+      border-top: 0;
+      background: rgba(2, 9, 11, 0.92);
+      clip-path: polygon(0 0, 12% 100%, 88% 100%, 100% 0);
+    }
+    html[data-variant="scifi"] .books-end-divider::after {
+      content: "";
+      position: absolute;
+      top: 0.34rem;
+      left: 50%;
+      width: 0.28rem;
+      height: 0.28rem;
+      transform: translate(-50%, -50%) rotate(45deg);
+      background: var(--hud-teal);
+      box-shadow: 0 0 8px rgba(87, 222, 211, 0.78);
+    }
     html[data-variant="scifi"] .book-stack,
     html[data-variant="scifi"] .winner .book-stack {
       position: relative;
@@ -1134,6 +1177,12 @@ export function page(options: {
     html[data-variant="scifi"] .book-stack .book-title { color: #d9f7f4; }
     html[data-variant="scifi"] .book-stack .cover,
     html[data-variant="scifi"] .book-stack .book-actions { flex: 0 0 auto; }
+    html[data-variant="scifi"] .book-stack:has(.cover) > .cover {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
     html[data-variant="scifi"] .book-stack .book-actions {
       margin-top: auto;
       padding: 0.25rem 0.2rem 0.35rem;
