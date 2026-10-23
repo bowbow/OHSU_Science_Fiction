@@ -266,6 +266,7 @@ export function page(options: {
     .books li { position: relative; z-index: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-width: 0; max-width: 100%; font-size: 1.05rem; font-weight: 600; line-height: 1.3; }
     .book-float-group { display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 100%; min-width: 0; }
     .book-stack {
+      position: relative;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -284,7 +285,7 @@ export function page(options: {
       flex-wrap: wrap;
       justify-content: center;
       align-items: center;
-      gap: 0.35rem;
+      gap: 0.65rem 0.8rem;
       width: 100%;
       max-width: 100%;
       min-width: 0;
@@ -327,10 +328,50 @@ export function page(options: {
     .books .book-actions button,
     .books .book-actions .your-vote { max-width: 100%; white-space: normal; line-height: 1.2; }
     .books .book-actions .your-vote { margin-left: 0; }
+    .book-remove {
+      position: absolute;
+      z-index: 4;
+      top: 0.45rem;
+      right: 0.45rem;
+      display: block;
+      width: auto;
+      margin: 0;
+      padding: 0;
+      border: 0;
+    }
+    .books .book-remove { max-width: none; }
+    .books .book-remove button.book-remove-control {
+      display: grid;
+      place-items: center;
+      width: 2rem;
+      min-width: 2rem;
+      height: 2rem;
+      padding: 0;
+      border-radius: 0;
+      clip-path: polygon(
+        0.45rem 0,
+        calc(100% - 0.45rem) 0,
+        100% 0.45rem,
+        100% calc(100% - 0.45rem),
+        calc(100% - 0.45rem) 100%,
+        0.45rem 100%,
+        0 calc(100% - 0.45rem),
+        0 0.45rem
+      );
+      font-size: 1.25rem;
+      line-height: 1;
+    }
+    .books .book-remove dialog { max-width: min(28rem, calc(100vw - 2rem)); }
+    .books .book-remove dialog form { display: block; }
+    .books .book-remove dialog button { min-width: 0; }
+    .book-remove button.danger,
+    dialog.confirm button.danger { color: #9f1239; border-color: #9f1239; background: rgba(159, 18, 57, 0.08); }
+    .book-remove button.danger:hover,
+    dialog.confirm button.danger:hover { color: white; background: #9f1239; }
     .voter-disclosure {
       width: 100%;
       max-width: 14rem;
-      margin-top: 0.45rem;
+      margin-top: 0.35rem;
       color: #4d5d73;
       font-size: 0.78rem;
       font-weight: 500;
@@ -1098,7 +1139,7 @@ export function page(options: {
       z-index: 3;
       width: min(calc(100% - 2.8rem), 11rem);
       max-width: 11rem;
-      margin-top: -2.6rem;
+      margin-top: -1.75rem;
       padding: 0;
       color: var(--hud-muted);
       text-align: center;
@@ -1140,6 +1181,23 @@ export function page(options: {
       box-shadow: inset 0 0 14px rgba(87, 222, 211, 0.05), 0 0 10px rgba(87, 222, 211, 0.08);
     }
     html[data-variant="scifi"] .book-float-group > .voter-disclosure .voter-name::before { color: var(--hud-teal); }
+    html[data-variant="scifi"] .book-stack > .book-remove {
+      top: 1.2rem;
+      right: 1.35rem;
+      width: auto;
+      margin: 0;
+      padding: 0;
+      border: 0;
+    }
+    html[data-variant="scifi"] .book-remove button.danger,
+    html[data-variant="scifi"] dialog.confirm button.danger {
+      color: #ff9bbb;
+      border-color: rgba(255, 91, 141, 0.72);
+      background: rgba(82, 8, 35, 0.58);
+      box-shadow: 0 0 10px rgba(255, 91, 141, 0.16);
+    }
+    html[data-variant="scifi"] .book-remove button.danger:hover,
+    html[data-variant="scifi"] dialog.confirm button.danger:hover { color: white; background: rgba(159, 18, 57, 0.9); }
     html[data-variant="scifi"] .success { color: #9bf4ec; text-shadow: 0 0 10px rgba(87, 222, 211, 0.35); }
     html[data-variant="scifi"] .feedback-form textarea {
       color: var(--hud-text);

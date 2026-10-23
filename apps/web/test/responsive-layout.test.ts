@@ -103,8 +103,10 @@ test("the sci-fi books use a local electronic card image", () => {
   assert.match(source, /\.book-stack \.cover,[\s\S]*?\.book-stack \.book-actions\s*\{[^}]*flex:\s*0 0 auto;/s);
   assert.match(source, /\.book-stack \.book-actions\s*\{[^}]*margin-top:\s*auto;/s);
   assert.match(source, /\.book-float-group\s*\{[^}]*display:\s*flex;[^}]*flex-direction:\s*column;/s);
-  assert.match(source, /\.book-float-group > \.voter-disclosure\s*\{[^}]*width:\s*min\(calc\(100% - 2\.8rem\), 11rem\);[^}]*margin-top:\s*-2\.6rem;/s);
+  assert.match(source, /\.book-float-group > \.voter-disclosure\s*\{[^}]*width:\s*min\(calc\(100% - 2\.8rem\), 11rem\);[^}]*margin-top:\s*-1\.75rem;/s);
   assert.match(source, /\.book-float-group > \.voter-disclosure summary\s*\{[^}]*display:\s*block;[^}]*clip-path:\s*polygon/s);
+  assert.match(source, /\.book-remove\s*\{[^}]*position:\s*absolute;[^}]*top:\s*0\.45rem;[^}]*right:\s*0\.45rem;/s);
+  assert.match(source, /\.book-remove button\.book-remove-control\s*\{[^}]*width:\s*2rem;[^}]*height:\s*2rem;[^}]*border-radius:\s*0;[^}]*clip-path:\s*polygon/s);
   assert.equal(existsSync(cardUrl), true);
   assert.ok(statSync(cardUrl).size < 12_000);
   assert.match(serverSource, /pathname === "\/assets\/book-card\.svg"/);

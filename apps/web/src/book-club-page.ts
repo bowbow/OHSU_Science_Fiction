@@ -455,8 +455,21 @@ function suggestionList(
     return "<p>No books have been suggested yet.</p>";
   }
   const items = round.suggestions.map((suggestion) => {
+    const title = escapeHtml(suggestion.title);
+    const removeDialogId = `remove-book-${escapeHtml(suggestion.id)}`;
     const remove = showActions && member.role === "admin"
-      ? `<form method="post" action="/book-club/suggestions/remove"><input type="hidden" name="suggestion" value="${escapeHtml(suggestion.id)}"><button class="quiet" type="submit">Remove</button></form>`
+      ? suggestion.votes > 0
+        ? `<div class="book-remove">
+             <button class="quiet danger book-remove-control book-remove-open" type="button" aria-label="Remove ${title}" title="Remove book" aria-controls="${removeDialogId}">&times;</button>
+             <dialog class="confirm book-remove-confirm" id="${removeDialogId}">
+               <p><strong>${title}</strong> has ${voteCount(suggestion.votes)}. Are you sure you want to remove it?</p>
+               <div class="confirm-actions">
+                 <form method="post" action="/book-club/suggestions/remove"><input type="hidden" name="suggestion" value="${escapeHtml(suggestion.id)}"><button class="danger" type="submit">Yes, remove book</button></form>
+                 <button class="quiet book-remove-close" type="button">No, keep book</button>
+               </div>
+             </dialog>
+           </div>`
+        : `<form class="book-remove" method="post" action="/book-club/suggestions/remove"><input type="hidden" name="suggestion" value="${escapeHtml(suggestion.id)}"><button class="quiet danger book-remove-control" type="submit" aria-label="Remove ${title}" title="Remove book">&times;</button></form>`
       : "";
     const vote = !showActions
       ? ""
@@ -466,9 +479,8 @@ function suggestionList(
     const choose = chooseIds.has(suggestion.id)
       ? `<form class="choose" method="post" action="/book-club/close"><input type="hidden" name="suggestion" value="${escapeHtml(suggestion.id)}"><button type="submit">Choose this book</button></form>`
       : "";
-    const title = escapeHtml(suggestion.title);
     const votes = `<span class="votes">${voteCount(suggestion.votes)}</span>`;
-    const actions = vote || remove || choose ? `<span class="book-actions">${vote}${choose}${remove}</span>` : "";
+    const actions = vote || choose ? `<span class="book-actions">${vote}${choose}</span>` : "";
     const voters = member.role === "admin" && suggestion.voters && suggestion.voters.length > 0
       ? `<details class="voter-disclosure">
            <summary>View voters</summary>
@@ -479,12 +491,29 @@ function suggestionList(
       : "";
     const suggestedBy = escapeHtml(suggestion.suggestedBy);
     if (suggestion.coverId === null) {
-      return `<li class="book" title="Suggested by ${suggestedBy}"><div class="book-float-group"><div class="book-stack">${votes}<span class="book-title">${title}</span>${actions}</div>${voters}</div></li>`;
+      return `<li class="book" title="Suggested by ${suggestedBy}"><div class="book-float-group"><div class="book-stack">${votes}${remove}<span class="book-title">${title}</span>${actions}</div>${voters}</div></li>`;
     }
     const cover = `<img class="cover" alt="${title}" src="https://covers.openlibrary.org/b/id/${suggestion.coverId}-M.jpg" onerror="var card=this.closest('li');var name=card.querySelector('.book-title');if(name)name.hidden=false;var drift=this.closest('.cover-float');if(drift)drift.classList.remove('cover-float');this.remove()">`;
-    return `<li class="book" title="Suggested by ${suggestedBy}"><div class="book-float-group cover-float"><div class="book-stack">${votes}${cover}<span class="book-title" hidden>${title}</span>${actions}</div>${voters}</div></li>`;
+    return `<li class="book" title="Suggested by ${suggestedBy}"><div class="book-float-group cover-float"><div class="book-stack">${votes}${remove}${cover}<span class="book-title" hidden>${title}</span>${actions}</div>${voters}</div></li>`;
   }).join("");
-  return `<ul class="books">${items}</ul>`;
+  return `<ul class="books">${items}</ul>
+  <script>
+    (() => {
+      document.querySelectorAll(".book-remove-open").forEach((button) => {
+        button.addEventListener("click", () => {
+          const dialogId = button.getAttribute("aria-controls");
+          const dialog = dialogId ? document.getElementById(dialogId) : null;
+          if (dialog instanceof HTMLDialogElement) dialog.showModal();
+        });
+      });
+      document.querySelectorAll(".book-remove-close").forEach((button) => {
+        button.addEventListener("click", () => {
+          const dialog = button.closest("dialog");
+          if (dialog instanceof HTMLDialogElement) dialog.close();
+        });
+      });
+    })();
+  </script>`;
 }
 
 export function closeBookClubForm(

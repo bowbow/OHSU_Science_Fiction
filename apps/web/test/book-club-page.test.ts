@@ -119,12 +119,29 @@ test("only an admin can remove books", async () => {
   const memberPage = await app.handle({ method: "GET", path: "/book-club", headers: { cookie: regular } });
   assert.equal(item(memberPage.body, "The Hobbit").includes("Remove"), false);
   assert.equal(item(memberPage.body, "Dune").includes("Remove"), false);
+  const duneId = suggestionId(memberPage.body, "Dune");
+  const hobbitId = suggestionId(memberPage.body, "The Hobbit");
+
+  await app.handle({
+    method: "POST",
+    path: "/book-club/votes",
+    headers: { cookie: regular, "content-type": "application/x-www-form-urlencoded" },
+    body: `suggestion=${encodeURIComponent(duneId)}`,
+  });
 
   const adminPage = await app.handle({ method: "GET", path: "/book-club", headers: { cookie: admin } });
-  assert.match(item(adminPage.body, "Dune"), /Remove/);
-  assert.match(item(adminPage.body, "The Hobbit"), /Remove/);
-  const duneId = suggestionId(adminPage.body, "Dune");
-  const hobbitId = suggestionId(memberPage.body, "The Hobbit");
+  const votedDune = item(adminPage.body, "Dune");
+  assert.match(votedDune, /class="quiet danger book-remove-control book-remove-open"/);
+  assert.match(votedDune, /aria-label="Remove Dune"[^>]*>&times;<\/button>/);
+  assert.match(votedDune, /<dialog class="confirm book-remove-confirm"/);
+  assert.match(votedDune, /<strong>Dune<\/strong> has 1 vote\. Are you sure you want to remove it\?/);
+  assert.match(votedDune, />Yes, remove book<\/button>/);
+  assert.match(votedDune, />No, keep book<\/button>/);
+  const unvotedHobbit = item(adminPage.body, "The Hobbit");
+  assert.match(unvotedHobbit, /<form class="book-remove" method="post" action="\/book-club\/suggestions\/remove">/);
+  assert.match(unvotedHobbit, /aria-label="Remove The Hobbit"[^>]*>&times;<\/button>/);
+  assert.equal(unvotedHobbit.includes("book-remove-confirm"), false);
+  assert.match(adminPage.body, /document\.querySelectorAll\("\.book-remove-open"\)/);
 
   const refused = await app.handle({
     method: "POST",
