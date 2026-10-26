@@ -69,12 +69,14 @@ keys must never be written to logs, release archives, Git, or Terraform state.
 Download the production activity log through Systems Manager (no SSH required):
 
 ```powershell
-./scripts/download-activity-log.ps1 -AwsProfile default
+./scripts/view-server-log.ps1 -AwsProfile default
 ```
 
-The default destination is a timestamped `.log` file under `data/`. Use
-`-OutputPath .\activity.log` to choose a different local destination. The EC2
-instance must be running and online in Systems Manager.
+This downloads the log to a timestamped `.log` file under `data/` and immediately
+pages through it with `more`. Press Space for the next page or Q to quit. Use
+`-OutputPath .\activity.log` to choose a different local destination. To download
+without opening the pager, use `./scripts/download-activity-log.ps1` with the same
+options. The EC2 instance must be running and online in Systems Manager.
 
 ## AWS deployment
 

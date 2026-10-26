@@ -3,6 +3,7 @@ $repoRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $deploy = Get-Content -LiteralPath (Join-Path $repoRoot "scripts/deploy.ps1") -Raw
 $remote = Get-Content -LiteralPath (Join-Path $repoRoot "scripts/remote-deploy.sh") -Raw
 $provision = Get-Content -LiteralPath (Join-Path $repoRoot "scripts/provision.ps1") -Raw
+$viewLog = Get-Content -LiteralPath (Join-Path $repoRoot "scripts/view-server-log.ps1") -Raw
 $backup = Get-Content -LiteralPath (Join-Path $repoRoot "scripts/backup-database.sh") -Raw
 $restore = Get-Content -LiteralPath (Join-Path $repoRoot "scripts/restore-database.sh") -Raw
 $terraform = Get-Content -LiteralPath (Join-Path $repoRoot "infra/aws/main.tf") -Raw
@@ -47,6 +48,9 @@ Assert-Contains $userData 'EnvironmentFile=-/etc/bookclub-secrets\.env' "New ins
 Assert-Contains $package '--env-file-if-exists=\.env\.local' "Local start commands must load the ignored development environment file."
 Assert-Contains $provision '\[switch\]\$PlanOnly' "Provisioning must support review without apply."
 Assert-Contains $provision "get-caller-identity" "Provisioning must verify the selected AWS profile."
+Assert-Contains $viewLog "download-activity-log\.ps1" "The log viewer must use the established AWS download script."
+Assert-Contains $viewLog 'Get-Command "more\.com"' "The log viewer must require the Windows pager."
+Assert-Contains $viewLog '& \$more\.Source \$OutputPath' "The log viewer must page through the downloaded file."
 
 $backupPosition = $remote.IndexOf('backup-database.sh" pre-deploy')
 $migrationPosition = $remote.IndexOf('migrate-feedback.ts')

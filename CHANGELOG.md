@@ -10,6 +10,7 @@ Production baseline: `53a6352`
 
 ### Added
 
+- Added a one-command PowerShell script that downloads the production activity log through AWS Systems Manager and opens it with `more`.
 - Added a prominent slide-out information control on each available book card with its Google Books story summary, genres, source link, and cover fallback when available; clicking outside closes the drawer.
 - Added secure local and production configuration plumbing for the Google Books integration.
 - Added a confirmation dialog before an administrator removes a book that already has one or more votes.
