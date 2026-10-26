@@ -51,9 +51,12 @@ Assert-Contains $provision '\[switch\]\$PlanOnly' "Provisioning must support rev
 Assert-Contains $provision "get-caller-identity" "Provisioning must verify the selected AWS profile."
 Assert-Contains $viewLog "download-activity-log\.ps1" "The log viewer must use the established AWS download script."
 Assert-Contains $viewLog 'Get-Command "more\.com"' "The log viewer must require the Windows pager."
-Assert-Contains $viewLog '& \$more\.Source \$OutputPath' "The log viewer must page through the downloaded file."
+Assert-Contains $viewLog '& \$more\.Source \$logPath' "The log viewer must page through the selected file."
 Assert-Contains $viewLog "Convert-ActivityLogLineToLocal" "The log viewer must convert UTC lines for local display."
 Assert-Contains $viewLog "ToLocalTime" "The log viewer must use the viewing computer's local timezone."
+Assert-Contains $viewLog '\[string\]\$InputPath = ""' "The log viewer must accept an existing downloaded log."
+Assert-Contains $viewLog 'Test-Path -LiteralPath \$logPath -PathType Leaf' "The log viewer must validate an existing log before opening it."
+Assert-Contains $viewLog 'Use either -InputPath.+-OutputPath' "The log viewer must reject ambiguous input and output paths."
 foreach ($awsScript in @($deploy, $provision, $downloadLog, $viewLog)) {
   Assert-Contains $awsScript '\[string\]\$AwsProfile = "default"' "Every PowerShell AWS helper must default to the default profile."
   Assert-Contains $awsScript 'IsNullOrWhiteSpace\(\$AwsProfile\)' "Every PowerShell AWS helper must treat a blank profile as default."

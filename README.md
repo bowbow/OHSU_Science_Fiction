@@ -81,6 +81,15 @@ local destination. To download without opening the pager, use
 `./scripts/download-activity-log.ps1` with the same options. The EC2 instance must
 be running and online in Systems Manager.
 
+To view a log that has already been downloaded, without contacting AWS again:
+
+```powershell
+./scripts/view-server-log.ps1 -InputPath ./data/activity-20261026-120000.log
+```
+
+Replace the filename with the downloaded log you want to inspect. This uses the
+same local-time conversion and pager. Add `-Utc` to display that file unchanged.
+
 ## AWS deployment
 
 The production deployment is defined in [specs/010-deploy-aws-ec2](specs/010-deploy-aws-ec2). It uses one Amazon Linux EC2 instance in `us-east-1`, an Elastic IP, Nginx, systemd, Systems Manager, and a private S3 release bucket. Docker and inbound SSH are not required. The instance stops at 9:00pm Pacific and starts at 7:00am Pacific. The disk and public address stay in place, and the site is unreachable while the instance is stopped.

@@ -18,7 +18,7 @@ Production baseline: `53a6352`
 
 ### Changed
 
-- Made every PowerShell AWS helper fall back to the `default` profile when `-AwsProfile` is omitted or blank, and made the paged log viewer show timestamps in the computer's local timezone while retaining the downloaded UTC log.
+- Made every PowerShell AWS helper fall back to the `default` profile when `-AwsProfile` is omitted or blank, and made the paged log viewer show downloaded or existing logs in the computer's local timezone while retaining the UTC file.
 - Kept the exact Open Library cover selected by an administrator and restricted Google Books details to editions whose ISBN Open Library assigns to that same work; unverified legacy details are no longer shown.
 - Replaced the administrator's inline **Remove** button with an angular **X** in the upper-right corner of each book tile, reducing the chance of accidentally selecting it instead of **View voters**.
 - Reduced the vertical space between the vote control and **View voters**.
