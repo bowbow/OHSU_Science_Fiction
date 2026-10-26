@@ -69,14 +69,17 @@ keys must never be written to logs, release archives, Git, or Terraform state.
 Download the production activity log through Systems Manager (no SSH required):
 
 ```powershell
-./scripts/view-server-log.ps1 -AwsProfile default
+./scripts/view-server-log.ps1
 ```
 
 This downloads the log to a timestamped `.log` file under `data/` and immediately
-pages through it with `more`. Press Space for the next page or Q to quit. Use
-`-OutputPath .\activity.log` to choose a different local destination. To download
-without opening the pager, use `./scripts/download-activity-log.ps1` with the same
-options. The EC2 instance must be running and online in Systems Manager.
+pages through it with `more`. UTC timestamps are converted for display to this
+computer's local timezone, including its UTC offset; the downloaded file remains
+unchanged in UTC. Press Space for the next page or Q to quit. Use `-Utc` to display
+the original UTC timestamps, or `-OutputPath .\activity.log` to choose a different
+local destination. To download without opening the pager, use
+`./scripts/download-activity-log.ps1` with the same options. The EC2 instance must
+be running and online in Systems Manager.
 
 ## AWS deployment
 
@@ -100,14 +103,14 @@ Never commit or paste AWS access keys, secret access keys, session tokens, `.env
 Review and provision:
 
 ```powershell
-./scripts/provision.ps1 -AwsProfile default -PlanOnly
-./scripts/provision.ps1 -AwsProfile default
+./scripts/provision.ps1 -PlanOnly
+./scripts/provision.ps1
 ```
 
 Deploy application code:
 
 ```powershell
-./scripts/deploy.ps1 -AwsProfile default
+./scripts/deploy.ps1
 ```
 
 Production SQLite data is stored at `/var/lib/bookclub/bookclub.sqlite`, outside `/opt/bookclub/releases`; deploying code never packages or removes it. Keep a private backup of `infra/aws/terraform.tfstate`, because the initial design intentionally uses local Terraform state. A remote encrypted state backend is the recommended upgrade when more than one computer or operator manages the environment.
@@ -118,7 +121,7 @@ Terraform creates a separate private S3 bucket for database backups. Public acce
 
 The EC2 resource ignores changes to the moving "latest Amazon Linux" AMI parameter so an unrelated Terraform apply does not replace the stateful instance and its root volume. Operating-system upgrades should be planned separately with a verified database backup.
 
-Run `./scripts/provision.ps1 -AwsProfile default` once to create the backup bucket and permissions before deploying a release that contains the backup scripts.
+Run `./scripts/provision.ps1` once to create the backup bucket and permissions before deploying a release that contains the backup scripts.
 
 Each deployment creates a verified SQLite snapshot before activating the new release. A systemd timer also creates a weekly backup on Sunday at noon Pacific. Backup files are generated with SQLite's online backup API, checked with `PRAGMA integrity_check`, uploaded to S3, and removed from the instance afterward.
 

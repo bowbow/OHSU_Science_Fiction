@@ -3,6 +3,7 @@ $repoRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $deploy = Get-Content -LiteralPath (Join-Path $repoRoot "scripts/deploy.ps1") -Raw
 $remote = Get-Content -LiteralPath (Join-Path $repoRoot "scripts/remote-deploy.sh") -Raw
 $provision = Get-Content -LiteralPath (Join-Path $repoRoot "scripts/provision.ps1") -Raw
+$downloadLog = Get-Content -LiteralPath (Join-Path $repoRoot "scripts/download-activity-log.ps1") -Raw
 $viewLog = Get-Content -LiteralPath (Join-Path $repoRoot "scripts/view-server-log.ps1") -Raw
 $backup = Get-Content -LiteralPath (Join-Path $repoRoot "scripts/backup-database.sh") -Raw
 $restore = Get-Content -LiteralPath (Join-Path $repoRoot "scripts/restore-database.sh") -Raw
@@ -51,6 +52,35 @@ Assert-Contains $provision "get-caller-identity" "Provisioning must verify the s
 Assert-Contains $viewLog "download-activity-log\.ps1" "The log viewer must use the established AWS download script."
 Assert-Contains $viewLog 'Get-Command "more\.com"' "The log viewer must require the Windows pager."
 Assert-Contains $viewLog '& \$more\.Source \$OutputPath' "The log viewer must page through the downloaded file."
+Assert-Contains $viewLog "Convert-ActivityLogLineToLocal" "The log viewer must convert UTC lines for local display."
+Assert-Contains $viewLog "ToLocalTime" "The log viewer must use the viewing computer's local timezone."
+foreach ($awsScript in @($deploy, $provision, $downloadLog, $viewLog)) {
+  Assert-Contains $awsScript '\[string\]\$AwsProfile = "default"' "Every PowerShell AWS helper must default to the default profile."
+  Assert-Contains $awsScript 'IsNullOrWhiteSpace\(\$AwsProfile\)' "Every PowerShell AWS helper must treat a blank profile as default."
+}
+
+$tokens = $null
+$parseErrors = $null
+$viewLogAst = [System.Management.Automation.Language.Parser]::ParseInput($viewLog, [ref]$tokens, [ref]$parseErrors)
+if ($parseErrors.Count -gt 0) { throw "The log viewer must contain valid PowerShell." }
+$converter = $viewLogAst.Find({
+  param($node)
+  $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq "Convert-ActivityLogLineToLocal"
+}, $true)
+if (-not $converter) { throw "The local-time conversion function is missing." }
+Invoke-Expression $converter.Extent.Text
+$utc = [DateTime]::SpecifyKind([DateTime]::ParseExact(
+  "2026-10-07 17:25:03",
+  "yyyy-MM-dd HH:mm:ss",
+  [Globalization.CultureInfo]::InvariantCulture
+), [DateTimeKind]::Utc)
+$expectedLocalLine = "$($utc.ToLocalTime().ToString('yyyy-MM-dd HH:mm:ss zzz'))  ada registered"
+if ((Convert-ActivityLogLineToLocal "2026-10-07 17:25:03 UTC  ada registered") -ne $expectedLocalLine) {
+  throw "The log viewer did not convert a UTC activity line to local time."
+}
+if ((Convert-ActivityLogLineToLocal "unrecognized line") -ne "unrecognized line") {
+  throw "The log viewer must preserve lines without a recognized UTC timestamp."
+}
 
 $backupPosition = $remote.IndexOf('backup-database.sh" pre-deploy')
 $migrationPosition = $remote.IndexOf('migrate-feedback.ts')

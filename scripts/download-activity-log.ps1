@@ -6,6 +6,9 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+if ([string]::IsNullOrWhiteSpace($AwsProfile)) {
+  $AwsProfile = "default"
+}
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $terraformDir = Join-Path $repoRoot "infra/aws"
 $remoteLogPath = "/var/lib/bookclub/activity.log"
