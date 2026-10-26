@@ -1,8 +1,10 @@
 [CmdletBinding()]
 param(
+  [Parameter(Position = 0)]
+  [Alias("InputPath")]
+  [string]$LogFile = "",
   [string]$AwsProfile = "default",
   [string]$Region = "us-east-1",
-  [string]$InputPath = "",
   [string]$OutputPath = "",
   [switch]$Utc
 )
@@ -28,11 +30,14 @@ function Convert-ActivityLogLineToLocal([string]$Line) {
   return "$($at.ToLocalTime().ToString('yyyy-MM-dd HH:mm:ss zzz'))$($Matches.message)"
 }
 
-if (-not [string]::IsNullOrWhiteSpace($InputPath)) {
+if (-not [string]::IsNullOrWhiteSpace($LogFile)) {
   if (-not [string]::IsNullOrWhiteSpace($OutputPath)) {
-    throw "Use either -InputPath for an existing log or -OutputPath for a new download, not both."
+    throw "Supply either an existing log filename or -OutputPath for a new download, not both."
   }
-  $logPath = [System.IO.Path]::GetFullPath($InputPath)
+  if ([System.IO.Path]::GetFileName($LogFile) -ne $LogFile) {
+    throw "Supply only a log filename. Existing logs are read from the repository's data directory."
+  }
+  $logPath = Join-Path (Join-Path $repoRoot "data") $LogFile
   if (-not (Test-Path -LiteralPath $logPath -PathType Leaf)) {
     throw "Downloaded activity log was not found: $logPath"
   }

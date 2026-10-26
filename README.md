@@ -84,11 +84,13 @@ be running and online in Systems Manager.
 To view a log that has already been downloaded, without contacting AWS again:
 
 ```powershell
-./scripts/view-server-log.ps1 -InputPath ./data/activity-20261026-120000.log
+./scripts/view-server-log.ps1 activity-20261026-120000.log
 ```
 
-Replace the filename with the downloaded log you want to inspect. This uses the
-same local-time conversion and pager. Add `-Utc` to display that file unchanged.
+Replace the filename with the downloaded log you want to inspect. The script
+looks in the repository's `data` directory automatically, uses the same local-time
+conversion and pager, and does not contact AWS. Add `-Utc` to display that file
+unchanged. The older named form, `-InputPath activity-...log`, remains supported.
 
 ## AWS deployment
 
